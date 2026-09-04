@@ -3,6 +3,7 @@
 /* =========================================================
    ELINA MUSHROOM ADVENTURE
    Professional Mobile Canvas Engine
+   World 1 Visual Upgrade
    ========================================================= */
 
 
@@ -103,15 +104,8 @@ function resizeCanvas() {
         0
     );
 
-    /*
-       اگر مرحله در حال اجراست،
-       ارتفاع زمین را متناسب با صفحه تنظیم می‌کنیم.
-    */
-
     if (levelData) {
-
         rebuildResponsiveLevel();
-
     }
 }
 
@@ -130,22 +124,18 @@ function updateOrientation() {
         window.innerWidth >
         window.innerHeight;
 
-    if (newOrientation !== isLandscape) {
+    if (
+        newOrientation !==
+        isLandscape
+    ) {
 
         isLandscape =
             newOrientation;
 
         resizeCanvas();
 
-        /*
-           کمی زمان می‌دهیم تا مرورگر
-           اندازه واقعی صفحه را ثبت کند.
-        */
-
         setTimeout(() => {
-
             resizeCanvas();
-
         }, 100);
 
     }
@@ -192,10 +182,6 @@ let cameraX = 0;
 let levelData = null;
 
 let lastTime = 0;
-
-/*
-   جلوگیری از اجرای چند game loop
-*/
 
 let animationFrameId = null;
 let gameSessionId = 0;
@@ -247,7 +233,6 @@ window.addEventListener(
 
         }
 
-
         if (
             key === "ArrowLeft" ||
             key === "a" ||
@@ -257,7 +242,6 @@ window.addEventListener(
             keys.left = true;
 
         }
-
 
         if (
             key === "ArrowRight" ||
@@ -269,7 +253,6 @@ window.addEventListener(
 
         }
 
-
         if (
             key === "ArrowUp" ||
             key === " " ||
@@ -280,7 +263,6 @@ window.addEventListener(
             keys.jump = true;
 
         }
-
 
         if (
             key === "f" ||
@@ -302,7 +284,6 @@ window.addEventListener(
         const key =
             e.key;
 
-
         if (
             key === "ArrowLeft" ||
             key === "a" ||
@@ -312,7 +293,6 @@ window.addEventListener(
             keys.left = false;
 
         }
-
 
         if (
             key === "ArrowRight" ||
@@ -324,7 +304,6 @@ window.addEventListener(
 
         }
 
-
         if (
             key === "ArrowUp" ||
             key === " " ||
@@ -335,7 +314,6 @@ window.addEventListener(
             keys.jump = false;
 
         }
-
 
         if (
             key === "f" ||
@@ -362,7 +340,6 @@ function holdButton(
 
     if (!button) return;
 
-
     const release = (e) => {
 
         if (e) {
@@ -372,7 +349,6 @@ function holdButton(
         onUp();
 
     };
-
 
     button.addEventListener(
         "pointerdown",
@@ -396,7 +372,6 @@ function holdButton(
         }
     );
 
-
     button.addEventListener(
         "pointerup",
         release,
@@ -404,7 +379,6 @@ function holdButton(
             passive: false
         }
     );
-
 
     button.addEventListener(
         "pointercancel",
@@ -414,12 +388,10 @@ function holdButton(
         }
     );
 
-
     button.addEventListener(
         "lostpointercapture",
         release
     );
-
 
     button.addEventListener(
         "contextmenu",
@@ -439,20 +411,17 @@ holdButton(
     () => keys.left = false
 );
 
-
 holdButton(
     $("rightButton"),
     () => keys.right = true,
     () => keys.right = false
 );
 
-
 holdButton(
     $("jumpButton"),
     () => keys.jump = true,
     () => keys.jump = false
 );
-
 
 holdButton(
     $("shootButton"),
@@ -490,7 +459,6 @@ const player = {
     shootCooldown: 0,
 
     ammo: 7,
-
     maxAmmo: 7,
 
     ammoTimer: 0
@@ -510,6 +478,150 @@ let bullets = [];
 let flag = null;
 let boss = null;
 let father = null;
+
+
+/* =========================================================
+   PARTICLES
+========================================================= */
+
+let particles = [];
+
+function createParticles(
+    x,
+    y,
+    type = "coin"
+) {
+
+    const count =
+        type === "coin"
+            ? 12
+            : type === "enemy"
+                ? 18
+                : 8;
+
+    for (
+        let i = 0;
+        i < count;
+        i++
+    ) {
+
+        particles.push({
+
+            x,
+            y,
+
+            vx:
+                (Math.random() - 0.5) *
+                (
+                    type === "enemy"
+                        ? 7
+                        : 5
+                ),
+
+            vy:
+                -Math.random() *
+                (
+                    type === "enemy"
+                        ? 6
+                        : 4
+                ),
+
+            life:
+                0.6 +
+                Math.random() * 0.5,
+
+            maxLife: 1,
+
+            size:
+                3 +
+                Math.random() * 5,
+
+            type
+
+        });
+
+    }
+
+}
+
+
+function updateParticles(dt) {
+
+    for (
+        let i =
+            particles.length - 1;
+        i >= 0;
+        i--
+    ) {
+
+        const p =
+            particles[i];
+
+        p.x += p.vx;
+        p.y += p.vy;
+
+        p.vy += 0.18;
+
+        p.life -= dt;
+
+        if (
+            p.life <= 0
+        ) {
+
+            particles.splice(
+                i,
+                1
+            );
+
+        }
+
+    }
+
+}
+
+
+function drawParticles() {
+
+    for (
+        const p of particles
+    ) {
+
+        const alpha =
+            Math.max(
+                0,
+                p.life /
+                p.maxLife
+            );
+
+        ctx.save();
+
+        ctx.globalAlpha =
+            alpha;
+
+        ctx.fillStyle =
+            p.type === "coin"
+                ? "#ffd83d"
+                : p.type === "enemy"
+                    ? "#ff6b55"
+                    : "#ffffff";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            p.x - cameraX,
+            p.y,
+            p.size,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+        ctx.restore();
+
+    }
+
+}
 
 
 /* =========================================================
@@ -534,7 +646,6 @@ const worlds = {
 
     },
 
-
     2: {
 
         name: "برف",
@@ -551,7 +662,6 @@ const worlds = {
 
     },
 
-
     3: {
 
         name: "آب",
@@ -567,7 +677,6 @@ const worlds = {
         enemy: "fish"
 
     },
-
 
     4: {
 
@@ -602,14 +711,12 @@ function createLevel(
             ? 75
             : 90;
 
-
     const groundY =
         Math.max(
             260,
             canvasHeight -
             groundHeight
         );
-
 
     const data = {
 
@@ -641,7 +748,9 @@ function createLevel(
     };
 
 
-    /* زمین */
+    /* =====================================================
+       GROUND
+    ===================================================== */
 
     data.platforms.push({
 
@@ -658,13 +767,14 @@ function createLevel(
     });
 
 
-    /* سکوها */
+    /* =====================================================
+       PLATFORMS
+    ===================================================== */
 
     const spacing =
         isLandscape
             ? 360
             : 330;
-
 
     for (
         let i = 1;
@@ -676,11 +786,9 @@ function createLevel(
             i * spacing +
             ((level * 37) % 100);
 
-
         const heightOffset =
             50 +
             Math.sin(i * 1.7) * 35;
-
 
         const y =
             data.groundY -
@@ -688,7 +796,6 @@ function createLevel(
                 55,
                 heightOffset
             );
-
 
         data.platforms.push({
 
@@ -709,7 +816,9 @@ function createLevel(
     }
 
 
-    /* سکه‌ها */
+    /* =====================================================
+       COINS
+    ===================================================== */
 
     for (
         let i = 0;
@@ -721,12 +830,10 @@ function createLevel(
             220 +
             i * 180;
 
-
         const y =
             data.groundY -
             75 -
             ((i * 31) % 100);
-
 
         data.coins.push({
 
@@ -748,7 +855,9 @@ function createLevel(
     }
 
 
-    /* دشمن‌ها */
+    /* =====================================================
+       ENEMIES
+    ===================================================== */
 
     for (
         let i = 0;
@@ -760,23 +869,53 @@ function createLevel(
             550 +
             i * 430;
 
+        let enemyType =
+            worlds[world].enemy;
+
+        if (
+            world === 1
+        ) {
+
+            enemyType =
+                [
+                    "snail",
+                    "bee",
+                    "turtle"
+                ][i % 3];
+
+        }
+
+        const isBee =
+            enemyType === "bee";
 
         data.enemies.push({
 
             x,
 
             y:
-                data.groundY -
-                42,
+                isBee
+                    ? data.groundY -
+                      145 -
+                      (i % 2) * 35
+                    : data.groundY -
+                      42,
 
             width: 44,
 
             height: 38,
 
             vx:
-                i % 2 === 0
-                    ? 1.1
-                    : -1.1,
+                isBee
+                    ? (
+                        i % 2 === 0
+                            ? 1.4
+                            : -1.4
+                    )
+                    : (
+                        i % 2 === 0
+                            ? 1.1
+                            : -1.1
+                    ),
 
             leftLimit:
                 x - 100,
@@ -787,17 +926,27 @@ function createLevel(
             alive: true,
 
             type:
-                worlds[world].enemy,
+                enemyType,
 
             anim:
-                Math.random() * 10
+                Math.random() * 10,
+
+            baseY:
+                isBee
+                    ? data.groundY -
+                      145 -
+                      (i % 2) * 35
+                    : data.groundY -
+                      42
 
         });
 
     }
 
 
-    /* پرچم */
+    /* =====================================================
+       FLAG
+    ===================================================== */
 
     data.flag.x =
         data.width - 220;
@@ -806,9 +955,13 @@ function createLevel(
         data.groundY - 105;
 
 
-    /* Boss */
+    /* =====================================================
+       BOSS
+    ===================================================== */
 
-    if (level === 10) {
+    if (
+        level === 10
+    ) {
 
         data.boss = {
 
@@ -869,10 +1022,8 @@ function rebuildResponsiveLevel() {
 
     if (!levelData) return;
 
-
     const oldGround =
         levelData.groundY;
-
 
     const newGround =
         Math.max(
@@ -885,16 +1036,15 @@ function rebuildResponsiveLevel() {
             )
         );
 
-
     const difference =
         newGround -
         oldGround;
 
-
-    if (Math.abs(difference) < 1) {
+    if (
+        Math.abs(difference) < 1
+    ) {
         return;
     }
-
 
     levelData.groundY =
         newGround;
@@ -918,11 +1068,6 @@ function rebuildResponsiveLevel() {
     }
 
 
-    /*
-       سکوهای شناور نسبت به زمین
-       جابه‌جا می‌شوند.
-    */
-
     for (
         const platform of
         levelData.platforms
@@ -942,17 +1087,29 @@ function rebuildResponsiveLevel() {
 
 
     for (
-        const enemy of enemies
+        const enemy of
+        enemies
     ) {
 
         enemy.y +=
             difference;
 
+        if (
+            enemy.type ===
+            "bee"
+        ) {
+
+            enemy.baseY +=
+                difference;
+
+        }
+
     }
 
 
     for (
-        const coin of levelCoins
+        const coin of
+        levelCoins
     ) {
 
         coin.y +=
@@ -985,11 +1142,6 @@ function rebuildResponsiveLevel() {
     }
 
 
-    /*
-       اگر بازیکن پایین زمین افتاده بود
-       دوباره روی زمین قرار می‌گیرد.
-    */
-
     if (
         player.y >
         newGround + 100
@@ -1014,11 +1166,6 @@ function startLevel(
     world,
     level
 ) {
-
-    /*
-       Session جدید
-       برای جلوگیری از چند حلقه بازی
-    */
 
     gameSessionId++;
 
@@ -1070,8 +1217,6 @@ function startLevel(
         levelData.father;
 
 
-    /* شروع مرحله */
-
     player.x = 100;
 
     player.y =
@@ -1086,6 +1231,8 @@ function startLevel(
 
     player.direction = 1;
 
+    player.animTime = 0;
+
     player.invincible = 2;
 
     player.shootCooldown = 0;
@@ -1099,6 +1246,8 @@ function startLevel(
     cameraX = 0;
 
     bullets = [];
+
+    particles = [];
 
 
     gamePaused = false;
@@ -1181,7 +1330,10 @@ startGameButton.addEventListener(
         coins = 0;
         score = 0;
 
-        startLevel(1, 1);
+        startLevel(
+            1,
+            1
+        );
 
     }
 );
@@ -1481,6 +1633,33 @@ nextLevelButton.addEventListener(
     "click",
     () => {
 
+        if (
+            nextLevelButton.dataset.final ===
+            "true"
+        ) {
+
+            nextLevelButton.dataset.final =
+                "false";
+
+            winMenu.classList.add(
+                "hidden"
+            );
+
+            gameScreen.classList.add(
+                "hidden"
+            );
+
+            mainMenu.classList.remove(
+                "hidden"
+            );
+
+            stopGame();
+
+            return;
+
+        }
+
+
         winMenu.classList.add(
             "hidden"
         );
@@ -1556,7 +1735,6 @@ function stopGame() {
 
     gameWon = false;
 
-
     gameSessionId++;
 
 
@@ -1573,11 +1751,6 @@ function stopGame() {
 
     }
 
-
-    /*
-       کلیدها را آزاد می‌کنیم
-       تا بعد از خروج گیر نکنند.
-    */
 
     keys.left = false;
     keys.right = false;
@@ -1598,8 +1771,6 @@ function updatePlayer(dt) {
 
     if (!player) return;
 
-
-    /* حرکت */
 
     if (keys.left) {
 
@@ -1623,13 +1794,9 @@ function updatePlayer(dt) {
     }
 
 
-    /* اصطکاک */
-
     player.vx *=
         0.82;
 
-
-    /* سرعت */
 
     if (
         player.vx >
@@ -1653,8 +1820,6 @@ function updatePlayer(dt) {
     }
 
 
-    /* پرش */
-
     if (
         keys.jump &&
         player.onGround
@@ -1666,22 +1831,14 @@ function updatePlayer(dt) {
         player.onGround =
             false;
 
-        /*
-           فقط یک پرش برای هر لمس
-        */
-
         keys.jump = false;
 
     }
 
 
-    /* جاذبه */
-
     player.vy +=
         gravity;
 
-
-    /* حرکت */
 
     player.x +=
         player.vx;
@@ -1689,8 +1846,6 @@ function updatePlayer(dt) {
     player.y +=
         player.vy;
 
-
-    /* مرز چپ */
 
     if (
         player.x < 0
@@ -1702,8 +1857,6 @@ function updatePlayer(dt) {
 
     }
 
-
-    /* مرز راست */
 
     if (
         levelData &&
@@ -1718,8 +1871,6 @@ function updatePlayer(dt) {
 
     }
 
-
-    /* برخورد با سکو */
 
     player.onGround =
         false;
@@ -1767,8 +1918,6 @@ function updatePlayer(dt) {
     }
 
 
-    /* سقوط */
-
     if (
         player.y >
         canvasHeight + 200
@@ -1779,15 +1928,11 @@ function updatePlayer(dt) {
     }
 
 
-    /* انیمیشن */
-
     player.animTime +=
         Math.abs(
             player.vx
         ) * 0.15;
 
-
-    /* آسیب‌ناپذیری */
 
     if (
         player.invincible > 0
@@ -1798,8 +1943,6 @@ function updatePlayer(dt) {
 
     }
 
-
-    /* شلیک */
 
     if (
         player.shootCooldown > 0
@@ -1817,8 +1960,6 @@ function updatePlayer(dt) {
 
     }
 
-
-    /* شارژ مهمات */
 
     if (
         player.ammo <
@@ -1902,6 +2043,20 @@ function updateEnemies() {
 
 
         if (
+            enemy.type ===
+            "bee"
+        ) {
+
+            enemy.y =
+                enemy.baseY +
+                Math.sin(
+                    enemy.anim * 2
+                ) * 18;
+
+        }
+
+
+        if (
             enemy.x <=
             enemy.leftLimit
         ) {
@@ -1956,6 +2111,16 @@ function updateEnemies() {
 
                 score +=
                     100;
+
+
+                createParticles(
+                    enemy.x +
+                        enemy.width / 2,
+                    enemy.y +
+                        enemy.height / 2,
+                    "enemy"
+                );
+
 
                 showMessage(
                     "+100",
@@ -2080,8 +2245,6 @@ function updateBullets(dt) {
             false;
 
 
-        /* دشمن */
-
         for (
             const enemy of enemies
         ) {
@@ -2103,6 +2266,16 @@ function updateBullets(dt) {
 
                 score +=
                     100;
+
+
+                createParticles(
+                    enemy.x +
+                        enemy.width / 2,
+                    enemy.y +
+                        enemy.height / 2,
+                    "enemy"
+                );
+
 
                 destroyed =
                     true;
@@ -2126,8 +2299,6 @@ function updateBullets(dt) {
         }
 
 
-        /* Boss */
-
         if (
             boss &&
             boss.active &&
@@ -2146,6 +2317,13 @@ function updateBullets(dt) {
                 50;
 
 
+            createParticles(
+                bullet.x,
+                bullet.y,
+                "hit"
+            );
+
+
             bullets.splice(
                 i,
                 1
@@ -2161,6 +2339,16 @@ function updateBullets(dt) {
 
                 score +=
                     1000;
+
+
+                createParticles(
+                    boss.x +
+                        boss.width / 2,
+                    boss.y +
+                        boss.height / 2,
+                    "enemy"
+                );
+
 
                 showMessage(
                     "🏆 غول مرحله شکست خورد!",
@@ -2292,6 +2480,13 @@ function updateCoins() {
             score +=
                 25;
 
+
+            createParticles(
+                coin.x,
+                coin.y,
+                "coin"
+            );
+
         }
 
     }
@@ -2357,6 +2552,16 @@ function checkFinish() {
 
                 score +=
                     2000;
+
+
+                createParticles(
+                    father.x +
+                        father.width / 2,
+                    father.y +
+                        father.height / 2,
+                    "coin"
+                );
+
 
                 showMessage(
                     "👨‍👧 پدرت را نجات دادی!",
@@ -2510,51 +2715,10 @@ function showFinalVictory() {
         "🏠 بازگشت به خانه";
 
 
-    /*
-       به جای onclick جدید،
-       یک حالت نهایی تعریف می‌کنیم.
-    */
-
     nextLevelButton.dataset.final =
         "true";
 
 }
-
-
-/* =========================================================
-   FINAL BUTTON HANDLER
-========================================================= */
-
-nextLevelButton.addEventListener(
-    "click",
-    () => {
-
-        if (
-            nextLevelButton.dataset.final ===
-            "true"
-        ) {
-
-            nextLevelButton.dataset.final =
-                "false";
-
-            winMenu.classList.add(
-                "hidden"
-            );
-
-            gameScreen.classList.add(
-                "hidden"
-            );
-
-            mainMenu.classList.remove(
-                "hidden"
-            );
-
-            stopGame();
-
-        }
-
-    }
-);
 
 
 /* =========================================================
@@ -2587,6 +2751,15 @@ function hurtPlayer() {
         player.direction === 1
             ? -6
             : 6;
+
+
+    createParticles(
+        player.x +
+            player.width / 2,
+        player.y +
+            player.height / 2,
+        "hit"
+    );
 
 
     if (
@@ -2859,18 +3032,14 @@ function updateHUD() {
     livesText.textContent =
         lives;
 
-
     coinsText.textContent =
         coins;
-
 
     scoreText.textContent =
         score;
 
-
     currentWorldText.textContent =
         selectedWorld;
-
 
     currentLevelText.textContent =
         currentLevel;
@@ -2882,11 +3051,6 @@ function updateHUD() {
     ammoHud.textContent =
         `🔴 گلوله: ${player.ammo} / ${player.maxAmmo}`;
 
-
-    /*
-       در حالت افقی کمی پایین‌تر
-       از HUD قرار می‌گیرد.
-    */
 
     ammoHud.style.top =
         isLandscape
@@ -3010,19 +3174,26 @@ function drawBackground() {
 
 
 /* =========================================================
-   FOREST
+   FOREST BACKGROUND
 ========================================================= */
 
 function drawForestBackground() {
 
     /* خورشید */
 
+    ctx.save();
+
+    ctx.shadowBlur =
+        25;
+
+    ctx.shadowColor =
+        "#ffe680";
+
     ctx.fillStyle =
         "#ffe680";
 
 
     ctx.beginPath();
-
 
     ctx.arc(
         canvasWidth - 100,
@@ -3032,8 +3203,9 @@ function drawForestBackground() {
         Math.PI * 2
     );
 
-
     ctx.fill();
+
+    ctx.restore();
 
 
     /* ابرها */
@@ -3070,10 +3242,42 @@ function drawForestBackground() {
     }
 
 
-    /* تپه‌ها */
+    /* تپه‌های دور */
 
     ctx.fillStyle =
-        "#6ebc55";
+        "#8ed06d";
+
+
+    for (
+        let i = 0;
+        i < 9;
+        i++
+    ) {
+
+        const x =
+            i * 230 -
+            cameraX * 0.20;
+
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x,
+            canvasHeight - 75,
+            155,
+            Math.PI,
+            0
+        );
+
+        ctx.fill();
+
+    }
+
+
+    /* تپه‌های نزدیک */
+
+    ctx.fillStyle =
+        "#5cae4a";
 
 
     for (
@@ -3083,21 +3287,19 @@ function drawForestBackground() {
     ) {
 
         const x =
-            i * 230 -
-            cameraX * 0.28;
+            i * 280 -
+            cameraX * 0.38;
 
 
         ctx.beginPath();
 
-
         ctx.arc(
             x,
-            canvasHeight - 70,
-            150,
+            canvasHeight - 55,
+            125,
             Math.PI,
             0
         );
-
 
         ctx.fill();
 
@@ -3124,11 +3326,32 @@ function drawForestBackground() {
 
     }
 
+
+    /* بوته‌ها */
+
+    for (
+        let i = 0;
+        i < 25;
+        i++
+    ) {
+
+        const x =
+            i * 270 -
+            cameraX * 0.70;
+
+
+        drawBush(
+            x,
+            canvasHeight - 78
+        );
+
+    }
+
 }
 
 
 /* =========================================================
-   SNOW
+   SNOW BACKGROUND
 ========================================================= */
 
 function drawSnowBackground() {
@@ -3209,7 +3432,7 @@ function drawSnowBackground() {
 
 
 /* =========================================================
-   WATER
+   WATER BACKGROUND
 ========================================================= */
 
 function drawWaterBackground() {
@@ -3266,7 +3489,7 @@ function drawWaterBackground() {
 
 
 /* =========================================================
-   FIRE
+   FIRE BACKGROUND
 ========================================================= */
 
 function drawFireBackground() {
@@ -3321,7 +3544,7 @@ function drawCloud(
 ) {
 
     ctx.fillStyle =
-        "rgba(255,255,255,0.85)";
+        "rgba(255,255,255,0.88)";
 
 
     ctx.beginPath();
@@ -3368,17 +3591,35 @@ function drawTree(
     y
 ) {
 
+    /* تنه */
+
     ctx.fillStyle =
-        "#75452b";
+        "#70442b";
 
 
     ctx.fillRect(
         x,
-        y - 90,
-        28,
-        90
+        y - 95,
+        30,
+        95
     );
 
+
+    /* سایه تنه */
+
+    ctx.fillStyle =
+        "#56331f";
+
+
+    ctx.fillRect(
+        x + 20,
+        y - 95,
+        10,
+        95
+    );
+
+
+    /* تاج درخت */
 
     ctx.fillStyle =
         "#2f8b38";
@@ -3388,29 +3629,107 @@ function drawTree(
 
 
     ctx.arc(
-        x + 14,
-        y - 105,
-        48,
+        x + 15,
+        y - 110,
+        50,
         0,
         Math.PI * 2
     );
 
 
     ctx.arc(
-        x - 18,
-        y - 75,
-        35,
+        x - 20,
+        y - 80,
+        36,
         0,
         Math.PI * 2
     );
 
 
     ctx.arc(
-        x + 45,
-        y - 75,
-        38,
+        x + 48,
+        y - 80,
+        40,
         0,
         Math.PI * 2
+    );
+
+
+    ctx.fill();
+
+
+    /* برگ روشن */
+
+    ctx.fillStyle =
+        "#4eaa43";
+
+
+    ctx.beginPath();
+
+
+    ctx.arc(
+        x + 5,
+        y - 120,
+        20,
+        0,
+        Math.PI * 2
+    );
+
+
+    ctx.arc(
+        x + 34,
+        y - 100,
+        17,
+        0,
+        Math.PI * 2
+    );
+
+
+    ctx.fill();
+
+}
+
+
+/* =========================================================
+   BUSH
+========================================================= */
+
+function drawBush(
+    x,
+    y
+) {
+
+    ctx.fillStyle =
+        "#3b963c";
+
+
+    ctx.beginPath();
+
+
+    ctx.arc(
+        x,
+        y,
+        20,
+        Math.PI,
+        0
+    );
+
+
+    ctx.arc(
+        x + 22,
+        y - 8,
+        25,
+        Math.PI,
+        0
+    );
+
+
+    ctx.arc(
+        x + 48,
+        y,
+        21,
+        Math.PI,
+        0
     );
 
 
@@ -3594,6 +3913,36 @@ function drawWorld() {
                 13
             );
 
+
+            /* چمن کوچک */
+
+            if (
+                selectedWorld === 1
+            ) {
+
+                ctx.fillStyle =
+                    "#3e8d31";
+
+                for (
+                    let gx =
+                        screenX;
+                    gx <
+                        screenX +
+                        platform.width;
+                    gx += 24
+                ) {
+
+                    ctx.fillRect(
+                        gx,
+                        platform.y - 4,
+                        4,
+                        5
+                    );
+
+                }
+
+            }
+
         }
         else {
 
@@ -3628,7 +3977,7 @@ function drawWorld() {
 
 
 /* =========================================================
-   COINS DRAW
+   COINS
 ========================================================= */
 
 function drawCoins() {
@@ -3686,9 +4035,10 @@ function drawCoins() {
         );
 
 
-        ctx.shadowBlur =
-            15;
+        /* درخشش */
 
+        ctx.shadowBlur =
+            18;
 
         ctx.shadowColor =
             "#ffe600";
@@ -3716,6 +4066,19 @@ function drawCoins() {
         ctx.shadowBlur =
             0;
 
+
+        /* لبه */
+
+        ctx.strokeStyle =
+            "#e0a900";
+
+        ctx.lineWidth =
+            2;
+
+        ctx.stroke();
+
+
+        /* علامت */
 
         ctx.fillStyle =
             "#b77a00";
@@ -3782,6 +4145,28 @@ function drawEnemies() {
         }
         else if (
             enemy.type ===
+            "bee"
+        ) {
+
+            drawBee(
+                x,
+                enemy.y
+            );
+
+        }
+        else if (
+            enemy.type ===
+            "turtle"
+        ) {
+
+            drawTurtle(
+                x,
+                enemy.y
+            );
+
+        }
+        else if (
+            enemy.type ===
             "penguin"
         ) {
 
@@ -3825,6 +4210,17 @@ function drawSnail(
     y
 ) {
 
+    const bounce =
+        Math.sin(
+            performance.now() * 0.006
+        ) * 1.5;
+
+
+    ctx.save();
+
+
+    /* بدن */
+
     ctx.fillStyle =
         "#6c4a2e";
 
@@ -3834,7 +4230,7 @@ function drawSnail(
 
     ctx.ellipse(
         x + 22,
-        y + 24,
+        y + 25 + bounce,
         27,
         15,
         0,
@@ -3846,6 +4242,8 @@ function drawSnail(
     ctx.fill();
 
 
+    /* لاک */
+
     ctx.fillStyle =
         "#c47c3d";
 
@@ -3855,8 +4253,8 @@ function drawSnail(
 
     ctx.arc(
         x + 20,
-        y + 15,
-        14,
+        y + 15 + bounce,
+        15,
         0,
         Math.PI * 2
     );
@@ -3864,6 +4262,17 @@ function drawSnail(
 
     ctx.fill();
 
+
+    ctx.strokeStyle =
+        "#8b522d";
+
+    ctx.lineWidth =
+        3;
+
+    ctx.stroke();
+
+
+    /* چشم‌ها */
 
     ctx.fillStyle =
         "white";
@@ -3874,7 +4283,7 @@ function drawSnail(
 
     ctx.arc(
         x + 32,
-        y + 5,
+        y + 5 + bounce,
         5,
         0,
         Math.PI * 2
@@ -3883,7 +4292,7 @@ function drawSnail(
 
     ctx.arc(
         x + 43,
-        y + 5,
+        y + 5 + bounce,
         5,
         0,
         Math.PI * 2
@@ -3902,7 +4311,7 @@ function drawSnail(
 
     ctx.arc(
         x + 32,
-        y + 5,
+        y + 5 + bounce,
         2,
         0,
         Math.PI * 2
@@ -3911,7 +4320,7 @@ function drawSnail(
 
     ctx.arc(
         x + 43,
-        y + 5,
+        y + 5 + bounce,
         2,
         0,
         Math.PI * 2
@@ -3919,6 +4328,341 @@ function drawSnail(
 
 
     ctx.fill();
+
+
+    ctx.restore();
+
+}
+
+
+/* =========================================================
+   BEE
+========================================================= */
+
+function drawBee(
+    x,
+    y
+) {
+
+    const flap =
+        Math.sin(
+            performance.now() * 0.02
+        ) * 5;
+
+
+    ctx.save();
+
+
+    /* بال‌ها */
+
+    ctx.fillStyle =
+        "rgba(255,255,255,0.72)";
+
+
+    ctx.beginPath();
+
+
+    ctx.ellipse(
+        x + 11,
+        y + 9 + flap,
+        14,
+        7,
+        -0.4,
+        0,
+        Math.PI * 2
+    );
+
+
+    ctx.ellipse(
+        x + 35,
+        y + 9 - flap,
+        14,
+        7,
+        0.4,
+        0,
+        Math.PI * 2
+    );
+
+
+    ctx.fill();
+
+
+    /* بدن */
+
+    ctx.fillStyle =
+        "#f4c52f";
+
+
+    ctx.beginPath();
+
+
+    ctx.ellipse(
+        x + 23,
+        y + 22,
+        21,
+        15,
+        0,
+        0,
+        Math.PI * 2
+    );
+
+
+    ctx.fill();
+
+
+    /* نوارها */
+
+    ctx.strokeStyle =
+        "#282828";
+
+
+    ctx.lineWidth =
+        5;
+
+
+    ctx.beginPath();
+
+
+    ctx.moveTo(
+        x + 15,
+        y + 9
+    );
+
+
+    ctx.lineTo(
+        x + 15,
+        y + 35
+    );
+
+
+    ctx.moveTo(
+        x + 29,
+        y + 8
+    );
+
+
+    ctx.lineTo(
+        x + 29,
+        y + 36
+    );
+
+
+    ctx.stroke();
+
+
+    /* چشم */
+
+    ctx.fillStyle =
+        "#ffffff";
+
+
+    ctx.beginPath();
+
+
+    ctx.arc(
+        x + 38,
+        y + 17,
+        5,
+        0,
+        Math.PI * 2
+    );
+
+
+    ctx.fill();
+
+
+    ctx.fillStyle =
+        "#111";
+
+
+    ctx.beginPath();
+
+
+    ctx.arc(
+        x + 40,
+        y + 17,
+        2,
+        0,
+        Math.PI * 2
+    );
+
+
+    ctx.fill();
+
+
+    ctx.restore();
+
+}
+
+
+/* =========================================================
+   TURTLE
+========================================================= */
+
+function drawTurtle(
+    x,
+    y
+) {
+
+    const step =
+        Math.sin(
+            performance.now() * 0.012
+        ) * 3;
+
+
+    ctx.save();
+
+
+    /* پاها */
+
+    ctx.fillStyle =
+        "#4d873e";
+
+
+    ctx.fillRect(
+        x + 2,
+        y + 27 + step,
+        12,
+        10
+    );
+
+
+    ctx.fillRect(
+        x + 31,
+        y + 27 - step,
+        12,
+        10
+    );
+
+
+    /* لاک */
+
+    ctx.fillStyle =
+        "#3f7739";
+
+
+    ctx.beginPath();
+
+
+    ctx.ellipse(
+        x + 22,
+        y + 20,
+        23,
+        17,
+        0,
+        0,
+        Math.PI * 2
+    );
+
+
+    ctx.fill();
+
+
+    ctx.strokeStyle =
+        "#244d2c";
+
+    ctx.lineWidth =
+        3;
+
+    ctx.stroke();
+
+
+    /* طرح لاک */
+
+    ctx.strokeStyle =
+        "#69a64b";
+
+    ctx.lineWidth =
+        2;
+
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        x + 8,
+        y + 20
+    );
+
+    ctx.lineTo(
+        x + 36,
+        y + 20
+    );
+
+    ctx.moveTo(
+        x + 22,
+        y + 4
+    );
+
+    ctx.lineTo(
+        x + 22,
+        y + 36
+    );
+
+    ctx.stroke();
+
+
+    /* سر */
+
+    ctx.fillStyle =
+        "#63a84e";
+
+
+    ctx.beginPath();
+
+
+    ctx.arc(
+        x + 45,
+        y + 18,
+        10,
+        0,
+        Math.PI * 2
+    );
+
+
+    ctx.fill();
+
+
+    /* چشم */
+
+    ctx.fillStyle =
+        "#ffffff";
+
+
+    ctx.beginPath();
+
+
+    ctx.arc(
+        x + 48,
+        y + 15,
+        3,
+        0,
+        Math.PI * 2
+    );
+
+
+    ctx.fill();
+
+
+    ctx.fillStyle =
+        "#111";
+
+
+    ctx.beginPath();
+
+
+    ctx.arc(
+        x + 49,
+        y + 15,
+        1.5,
+        0,
+        Math.PI * 2
+    );
+
+
+    ctx.fill();
+
+
+    ctx.restore();
 
 }
 
@@ -4190,7 +4934,7 @@ function drawPlayer() {
     if (
         player.invincible > 0 &&
         Math.floor(
-            player.invincible * 10
+            player.invincible * 12
         ) % 2 === 0
     ) {
 
@@ -4224,54 +4968,135 @@ function drawPlayer() {
     );
 
 
+    const moving =
+        Math.abs(
+            player.vx
+        ) > 0.4;
+
+
     const walk =
+        moving &&
         player.onGround
             ? Math.sin(
-                player.animTime
-            ) * 4
+                player.animTime * 1.8
+            )
             : 0;
+
+
+    const bob =
+        moving &&
+        player.onGround
+            ? Math.abs(
+                Math.sin(
+                    player.animTime * 1.8
+                )
+            ) * 2
+            : 0;
+
+
+    /* سایه */
+
+    if (
+        player.onGround
+    ) {
+
+        ctx.fillStyle =
+            "rgba(0,0,0,0.22)";
+
+
+        ctx.beginPath();
+
+
+        ctx.ellipse(
+            0,
+            65,
+            23,
+            6,
+            0,
+            0,
+            Math.PI * 2
+        );
+
+
+        ctx.fill();
+
+    }
 
 
     /* پاها */
 
     ctx.fillStyle =
-        "#333b70";
+        "#394b86";
 
 
-    ctx.fillRect(
-        -13,
-        43 + walk,
-        10,
-        19
+    ctx.save();
+
+
+    ctx.translate(
+        -7,
+        43 + bob
+    );
+
+
+    ctx.rotate(
+        walk * 0.22
     );
 
 
     ctx.fillRect(
-        3,
-        43 - walk,
+        -5,
+        0,
         10,
-        19
+        20
     );
+
+
+    ctx.restore();
+
+
+    ctx.save();
+
+
+    ctx.translate(
+        7,
+        43 + bob
+    );
+
+
+    ctx.rotate(
+        -walk * 0.22
+    );
+
+
+    ctx.fillRect(
+        -5,
+        0,
+        10,
+        20
+    );
+
+
+    ctx.restore();
 
 
     /* کفش */
 
     ctx.fillStyle =
-        "#5c2c27";
+        "#55382e";
 
 
     ctx.fillRect(
-        -16,
-        58 + walk,
-        15,
+        -15,
+        59,
+        14,
         7
     );
 
 
     ctx.fillRect(
-        2,
-        58 - walk,
-        15,
+        1,
+        59,
+        14,
         7
     );
 
@@ -4279,7 +5104,7 @@ function drawPlayer() {
     /* بدن */
 
     ctx.fillStyle =
-        "#e94c54";
+        "#e84d5b";
 
 
     ctx.beginPath();
@@ -4287,9 +5112,9 @@ function drawPlayer() {
 
     ctx.roundRect(
         -16,
-        18,
+        18 + bob,
         32,
-        32,
+        30,
         9
     );
 
@@ -4297,56 +5122,96 @@ function drawPlayer() {
     ctx.fill();
 
 
-    /* لباس */
+    /* نوار لباس */
 
     ctx.fillStyle =
-        "#f3d35b";
+        "#f4d45c";
 
 
     ctx.fillRect(
-        -13,
+        -14,
+        29 + bob,
         28,
-        26,
         5
     );
 
 
-    /* دست‌ها */
+    /* دست چپ */
 
     ctx.fillStyle =
-        "#f3bd91";
+        "#f2bd91";
 
 
-    ctx.fillRect(
-        -23,
-        25,
-        9,
-        20
+    ctx.save();
+
+
+    ctx.translate(
+        -18,
+        25 + bob
+    );
+
+
+    ctx.rotate(
+        moving
+            ? -walk * 0.18
+            : 0
     );
 
 
     ctx.fillRect(
-        14,
-        25,
+        -4,
+        0,
         9,
-        20
+        21
     );
+
+
+    ctx.restore();
+
+
+    /* دست راست */
+
+    ctx.save();
+
+
+    ctx.translate(
+        18,
+        25 + bob
+    );
+
+
+    ctx.rotate(
+        moving
+            ? walk * 0.18
+            : 0
+    );
+
+
+    ctx.fillRect(
+        -4,
+        0,
+        9,
+        21
+    );
+
+
+    ctx.restore();
 
 
     /* گردن */
 
     ctx.fillRect(
         -6,
-        10,
+        9 + bob,
         12,
-        12
+        13
     );
 
 
     /* مو */
 
     ctx.fillStyle =
-        "#4c2920";
+        "#4b2923";
 
 
     ctx.beginPath();
@@ -4354,8 +5219,8 @@ function drawPlayer() {
 
     ctx.arc(
         0,
-        7,
-        22,
+        7 + bob,
+        23,
         0,
         Math.PI * 2
     );
@@ -4375,8 +5240,8 @@ function drawPlayer() {
 
     ctx.arc(
         3,
-        9,
-        16,
+        9 + bob,
+        17,
         0,
         Math.PI * 2
     );
@@ -4385,19 +5250,19 @@ function drawPlayer() {
     ctx.fill();
 
 
-    /* مو */
+    /* موهای جلویی */
 
     ctx.fillStyle =
-        "#4c2920";
+        "#4b2923";
 
 
     ctx.beginPath();
 
 
     ctx.arc(
-        -3,
-        1,
-        18,
+        -4,
+        1 + bob,
+        19,
         Math.PI,
         Math.PI * 2
     );
@@ -4409,16 +5274,16 @@ function drawPlayer() {
     /* چشم */
 
     ctx.fillStyle =
-        "#222";
+        "#202020";
 
 
     ctx.beginPath();
 
 
     ctx.arc(
-        8,
-        8,
-        2.5,
+        9,
+        8 + bob,
+        2.7,
         0,
         Math.PI * 2
     );
@@ -4430,7 +5295,7 @@ function drawPlayer() {
     /* لبخند */
 
     ctx.strokeStyle =
-        "#9b4d46";
+        "#9d5048";
 
 
     ctx.lineWidth =
@@ -4441,8 +5306,8 @@ function drawPlayer() {
 
 
     ctx.arc(
-        7,
-        13,
+        8,
+        13 + bob,
         5,
         0,
         Math.PI
@@ -4450,6 +5315,52 @@ function drawPlayer() {
 
 
     ctx.stroke();
+
+
+    /* افکت پرش */
+
+    if (
+        !player.onGround
+    ) {
+
+        ctx.strokeStyle =
+            "#ffffff";
+
+
+        ctx.lineWidth =
+            3;
+
+
+        ctx.beginPath();
+
+
+        ctx.moveTo(
+            -21,
+            58
+        );
+
+
+        ctx.lineTo(
+            -28,
+            63
+        );
+
+
+        ctx.moveTo(
+            21,
+            58
+        );
+
+
+        ctx.lineTo(
+            28,
+            63
+        );
+
+
+        ctx.stroke();
+
+    }
 
 
     ctx.restore();
@@ -4705,8 +5616,6 @@ function drawBoss() {
     ctx.restore();
 
 
-    /* نوار جان */
-
     const barWidth =
         100;
 
@@ -4896,6 +5805,8 @@ function drawGame() {
 
     drawBullets();
 
+    drawParticles();
+
     drawPlayer();
 
     updateHUD();
@@ -4927,6 +5838,8 @@ function updateGame(dt) {
 
     updateCoins();
 
+    updateParticles(dt);
+
     updateBoss(dt);
 
     checkFinish();
@@ -4946,11 +5859,6 @@ function gameLoop(
     time,
     session
 ) {
-
-    /*
-       اگر این loop قدیمی باشد،
-       کاملاً متوقف می‌شود.
-    */
 
     if (
         session !==
@@ -5028,9 +5936,11 @@ pauseMenu.classList.add(
     "hidden"
 );
 
+
 gameOverMenu.classList.add(
     "hidden"
 );
+
 
 winMenu.classList.add(
     "hidden"
