@@ -1,5 +1,6 @@
+
 <!DOCTYPE html>
-<html lang="fa">
+<html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
 
@@ -8,167 +9,128 @@
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     >
 
-    <title>Elina Mushroom Adventure</title>
+    <title>ELINA MUSHROOM ADVENTURE</title>
 
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <!-- صفحه اصلی بازی -->
-    <main id="game">
+    <!-- =========================
+         MAIN MENU
+    ========================== -->
 
-        <!-- صفحه منوی اصلی -->
-        <section id="mainMenu">
+    <section id="mainMenu" class="screen">
 
-            <div class="logo">
-                <div class="logo-mushroom">🍄</div>
+        <div class="menu-box">
 
-                <h1>
-                    ELINA
-                </h1>
-
-                <h2>
-                    MUSHROOM ADVENTURE
-                </h2>
+            <div class="game-logo">
+                🍄
             </div>
 
-            <div class="menu-buttons">
+            <h1>ELINA</h1>
+            <h2>MUSHROOM ADVENTURE</h2>
 
-                <button id="startGame">
-                    ▶ شروع بازی
-                </button>
-
-                <button id="worldSelect">
-                    🌍 انتخاب دنیا
-                </button>
-
-                <button id="settingsButton">
-                    ⚙️ تنظیمات
-                </button>
-
-            </div>
-
-            <p class="copyright">
-                © Elina Mushroom Adventure
+            <p class="subtitle">
+                ماجراجویی الینا برای نجات پدر
             </p>
 
-        </section>
-
-
-        <!-- صفحه انتخاب دنیا -->
-        <section id="worldMenu" class="hidden">
-
-            <button id="backFromWorlds" class="back-button">
-                ← بازگشت
+            <button id="startGame" class="menu-button">
+                🎮 شروع بازی
             </button>
 
-            <h2 class="menu-title">
-                انتخاب دنیا
-            </h2>
+            <button id="worldSelect" class="menu-button">
+                🌍 انتخاب دنیا
+            </button>
 
-            <div class="world-list">
+            <button id="settingsButton" class="menu-button">
+                🔊 صدا: روشن
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================
+         WORLD MENU
+    ========================== -->
+
+    <section id="worldMenu" class="screen hidden">
+
+        <div class="menu-box">
+
+            <h2>🌍 انتخاب دنیا</h2>
+
+            <div class="world-grid">
 
                 <button class="world-card" data-world="1">
-
-                    <span class="world-icon">
-                        🌳
-                    </span>
-
-                    <span>
-                        دنیای جنگل
-                    </span>
-
-                    <small>
-                        WORLD 1
-                    </small>
-
+                    <span class="world-icon">🌳</span>
+                    <strong>دنیای جنگل</strong>
+                    <small>FOREST WORLD</small>
                 </button>
-
 
                 <button class="world-card" data-world="2">
-
-                    <span class="world-icon">
-                        ❄️
-                    </span>
-
-                    <span>
-                        دنیای برفی
-                    </span>
-
-                    <small>
-                        WORLD 2
-                    </small>
-
+                    <span class="world-icon">❄️</span>
+                    <strong>دنیای برف</strong>
+                    <small>SNOW WORLD</small>
                 </button>
-
 
                 <button class="world-card" data-world="3">
-
-                    <span class="world-icon">
-                        🌊
-                    </span>
-
-                    <span>
-                        دنیای آب
-                    </span>
-
-                    <small>
-                        WORLD 3
-                    </small>
-
+                    <span class="world-icon">🌊</span>
+                    <strong>دنیای آب</strong>
+                    <small>WATER WORLD</small>
                 </button>
-
 
                 <button class="world-card" data-world="4">
-
-                    <span class="world-icon">
-                        🔥
-                    </span>
-
-                    <span>
-                        دنیای آتش
-                    </span>
-
-                    <small>
-                        WORLD 4
-                    </small>
-
+                    <span class="world-icon">🔥</span>
+                    <strong>دنیای آتش</strong>
+                    <small>FIRE WORLD</small>
                 </button>
 
             </div>
 
-        </section>
-
-
-        <!-- صفحه انتخاب مرحله -->
-        <section id="levelMenu" class="hidden">
-
-            <button id="backFromLevels" class="back-button">
-                ← بازگشت
+            <button id="backFromWorlds" class="back-button">
+                ↩️ بازگشت
             </button>
 
-            <h2 class="menu-title">
-                انتخاب مرحله
-            </h2>
+        </div>
 
-            <div id="levelList">
-
-                <!-- مراحل با JavaScript ساخته می‌شوند -->
-
-            </div>
-
-        </section>
+    </section>
 
 
-        <!-- خود بازی -->
-        <section id="gameScreen" class="hidden">
+    <!-- =========================
+         LEVEL MENU
+    ========================== -->
 
-            <canvas id="gameCanvas"></canvas>
+    <section id="levelMenu" class="screen hidden">
+
+        <div class="menu-box">
+
+            <h2>⭐ انتخاب مرحله</h2>
+
+            <div id="levelList" class="level-grid"></div>
+
+            <button id="backFromLevels" class="back-button">
+                ↩️ بازگشت
+            </button>
+
+        </div>
+
+    </section>
 
 
-            <!-- اطلاعات بالای بازی -->
-            <div id="gameHud">
+    <!-- =========================
+         GAME SCREEN
+    ========================== -->
+
+    <section id="gameScreen" class="screen hidden">
+
+        <div id="gameWrapper">
+
+            <!-- HUD -->
+
+            <div id="hud">
 
                 <div class="hud-item">
                     ❤️
@@ -185,40 +147,48 @@
                     <span id="score">0</span>
                 </div>
 
-                <div class="hud-item">
+                <div class="hud-world">
                     🌍
                     <span id="currentWorld">1</span>
                     -
                     <span id="currentLevel">1</span>
                 </div>
 
+                <button id="pauseButton" class="pause-button">
+                    ⏸️
+                </button>
+
             </div>
 
 
-            <!-- دکمه توقف -->
-            <button
-                id="pauseButton"
-                class="pause-button"
-            >
-                ❚❚
-            </button>
+            <!-- GAME CANVAS -->
+
+            <canvas id="gameCanvas"></canvas>
 
 
-            <!-- کنترل‌های موبایل -->
+            <!-- GAME MESSAGE -->
+
+            <div id="gameMessage"></div>
+
+
+            <!-- MOBILE CONTROLS -->
+
             <div id="mobileControls">
 
-                <div class="left-controls">
+                <div class="movement-controls">
 
                     <button
                         id="leftButton"
-                        class="game-control"
+                        class="control-button"
+                        type="button"
                     >
                         ◀
                     </button>
 
                     <button
                         id="rightButton"
-                        class="game-control"
+                        class="control-button"
+                        type="button"
                     >
                         ▶
                     </button>
@@ -226,20 +196,22 @@
                 </div>
 
 
-                <div class="right-controls">
+                <div class="action-controls">
 
                     <button
                         id="jumpButton"
-                        class="game-control jump-control"
+                        class="control-button jump"
+                        type="button"
                     >
-                        ⬆
+                        ⬆️
                     </button>
 
                     <button
                         id="shootButton"
-                        class="game-control shoot-control"
+                        class="control-button shoot"
+                        type="button"
                     >
-                        ●
+                        🔥
                     </button>
 
                 </div>
@@ -247,103 +219,95 @@
             </div>
 
 
-            <!-- پیام داخل بازی -->
-            <div id="gameMessage"></div>
+            <!-- =========================
+                 PAUSE MENU
+            ========================== -->
 
-        </section>
+            <div id="pauseMenu" class="game-overlay hidden">
 
+                <div class="overlay-box">
 
-        <!-- صفحه توقف -->
-        <section id="pauseMenu" class="overlay hidden">
+                    <h2>⏸️ بازی متوقف شد</h2>
 
-            <div class="pause-box">
+                    <button id="resumeButton" class="menu-button">
+                        ▶️ ادامه بازی
+                    </button>
 
-                <h2>
-                    ⏸ بازی متوقف شد
-                </h2>
+                    <button id="restartButton" class="menu-button">
+                        🔄 شروع دوباره
+                    </button>
 
-                <button id="resumeButton">
-                    ▶ ادامه بازی
-                </button>
+                    <button id="exitButton" class="menu-button">
+                        🏠 منوی اصلی
+                    </button>
 
-                <button id="restartButton">
-                    🔄 شروع دوباره
-                </button>
-
-                <button id="exitButton">
-                    🏠 منوی اصلی
-                </button>
+                </div>
 
             </div>
 
-        </section>
 
+            <!-- =========================
+                 GAME OVER
+            ========================== -->
 
-        <!-- صفحه پایان بازی -->
-        <section id="gameOverMenu" class="overlay hidden">
+            <div id="gameOverMenu" class="game-overlay hidden">
 
-            <div class="pause-box">
+                <div class="overlay-box">
 
-                <h2>
-                    💔 بازی تمام شد
-                </h2>
+                    <h2>💥 بازی تمام شد!</h2>
 
-                <p>
-                    امتیاز:
-                    <strong id="finalScore">
-                        0
-                    </strong>
-                </p>
+                    <p>
+                        امتیاز شما:
+                        <strong id="finalScore">0</strong>
+                    </p>
 
-                <button id="tryAgainButton">
-                    🔄 دوباره بازی کن
-                </button>
+                    <button id="tryAgainButton" class="menu-button">
+                        🔄 دوباره تلاش کن
+                    </button>
 
-                <button id="gameOverHome">
-                    🏠 منوی اصلی
-                </button>
+                    <button id="gameOverHome" class="menu-button">
+                        🏠 منوی اصلی
+                    </button>
 
-            </div>
-
-        </section>
-
-
-        <!-- صفحه پیروزی -->
-        <section id="winMenu" class="overlay hidden">
-
-            <div class="pause-box">
-
-                <h2>
-                    🏆 پیروز شدی!
-                </h2>
-
-                <p>
-                    پدرت را نجات دادی! 👨‍👧
-                </p>
-
-                <p>
-                    امتیاز:
-                    <strong id="winScore">
-                        0
-                    </strong>
-                </p>
-
-                <button id="nextLevelButton">
-                    🚩 مرحله بعد
-                </button>
-
-                <button id="winHomeButton">
-                    🏠 منوی اصلی
-                </button>
+                </div>
 
             </div>
 
-        </section>
 
-    </main>
+            <!-- =========================
+                 WIN MENU
+            ========================== -->
+
+            <div id="winMenu" class="game-overlay hidden">
+
+                <div class="overlay-box">
+
+                    <h2>🎉 مرحله با موفقیت تمام شد!</h2>
+
+                    <p>
+                        امتیاز شما:
+                        <strong id="winScore">0</strong>
+                    </p>
+
+                    <button id="nextLevelButton" class="menu-button">
+                        🚩 مرحله بعد
+                    </button>
+
+                    <button id="winHomeButton" class="menu-button">
+                        🏠 منوی اصلی
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
 
 
-    <!-- JavaScript -->
+    <!-- GAME SCRIPT -->
+
     <script src="game.js"></script>
 
 </body>
