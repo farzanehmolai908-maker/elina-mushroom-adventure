@@ -1,9 +1,10 @@
+"use strict";
+
 /* =========================================================
    ELINA MUSHROOM ADVENTURE
-   Main Canvas Game Engine
+   Professional Mobile Canvas Engine
    ========================================================= */
 
-"use strict";
 
 /* =========================================================
    DOM
@@ -65,21 +66,109 @@ let dpr = 1;
 
 function resizeCanvas() {
 
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvasWidth =
+        gameScreen.clientWidth ||
+        window.innerWidth ||
+        800;
 
-    canvasWidth = gameScreen.clientWidth || window.innerWidth;
-    canvasHeight = gameScreen.clientHeight || window.innerHeight;
+    canvasHeight =
+        gameScreen.clientHeight ||
+        window.innerHeight ||
+        450;
 
-    canvas.width = Math.floor(canvasWidth * dpr);
-    canvas.height = Math.floor(canvasHeight * dpr);
+    dpr =
+        Math.min(
+            window.devicePixelRatio || 1,
+            2
+        );
 
-    canvas.style.width = canvasWidth + "px";
-    canvas.style.height = canvasHeight + "px";
+    canvas.width =
+        Math.floor(canvasWidth * dpr);
 
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    canvas.height =
+        Math.floor(canvasHeight * dpr);
+
+    canvas.style.width =
+        canvasWidth + "px";
+
+    canvas.style.height =
+        canvasHeight + "px";
+
+    ctx.setTransform(
+        dpr,
+        0,
+        0,
+        dpr,
+        0,
+        0
+    );
+
+    /*
+       اگر مرحله در حال اجراست،
+       ارتفاع زمین را متناسب با صفحه تنظیم می‌کنیم.
+    */
+
+    if (levelData) {
+
+        rebuildResponsiveLevel();
+
+    }
 }
 
-window.addEventListener("resize", resizeCanvas);
+
+/* =========================================================
+   ORIENTATION
+========================================================= */
+
+let isLandscape =
+    window.innerWidth >
+    window.innerHeight;
+
+function updateOrientation() {
+
+    const newOrientation =
+        window.innerWidth >
+        window.innerHeight;
+
+    if (newOrientation !== isLandscape) {
+
+        isLandscape =
+            newOrientation;
+
+        resizeCanvas();
+
+        /*
+           کمی زمان می‌دهیم تا مرورگر
+           اندازه واقعی صفحه را ثبت کند.
+        */
+
+        setTimeout(() => {
+
+            resizeCanvas();
+
+        }, 100);
+
+    }
+}
+
+window.addEventListener(
+    "resize",
+    updateOrientation
+);
+
+window.addEventListener(
+    "orientationchange",
+    () => {
+
+        setTimeout(() => {
+
+            updateOrientation();
+            resizeCanvas();
+
+        }, 150);
+
+    }
+);
 
 
 /* =========================================================
@@ -104,97 +193,245 @@ let levelData = null;
 
 let lastTime = 0;
 
+/*
+   جلوگیری از اجرای چند game loop
+*/
+
+let animationFrameId = null;
+let gameSessionId = 0;
+
 
 /* =========================================================
    INPUT
 ========================================================= */
 
 const keys = {
+
     left: false,
     right: false,
     jump: false,
     shoot: false
+
 };
-
-window.addEventListener("keydown", (e) => {
-
-    if (
-        ["ArrowLeft", "ArrowRight", "ArrowUp", " ", "a", "A", "d", "D", "w", "W", "f", "F"].includes(e.key)
-    ) {
-        e.preventDefault();
-    }
-
-    if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") {
-        keys.left = true;
-    }
-
-    if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") {
-        keys.right = true;
-    }
-
-    if (
-        e.key === "ArrowUp" ||
-        e.key === " " ||
-        e.key === "w" ||
-        e.key === "W"
-    ) {
-        if (!keys.jump) {
-            keys.jump = true;
-        }
-    }
-
-    if (e.key === "f" || e.key === "F") {
-        keys.shoot = true;
-    }
-});
-
-window.addEventListener("keyup", (e) => {
-
-    if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") {
-        keys.left = false;
-    }
-
-    if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") {
-        keys.right = false;
-    }
-
-    if (
-        e.key === "ArrowUp" ||
-        e.key === " " ||
-        e.key === "w" ||
-        e.key === "W"
-    ) {
-        keys.jump = false;
-    }
-
-    if (e.key === "f" || e.key === "F") {
-        keys.shoot = false;
-    }
-});
 
 
 /* =========================================================
-   MOBILE BUTTONS
+   KEYBOARD
 ========================================================= */
 
-function holdButton(button, onDown, onUp) {
+window.addEventListener(
+    "keydown",
+    (e) => {
+
+        const key =
+            e.key;
+
+        if (
+            [
+                "ArrowLeft",
+                "ArrowRight",
+                "ArrowUp",
+                " ",
+                "a",
+                "A",
+                "d",
+                "D",
+                "w",
+                "W",
+                "f",
+                "F"
+            ].includes(key)
+        ) {
+
+            e.preventDefault();
+
+        }
+
+
+        if (
+            key === "ArrowLeft" ||
+            key === "a" ||
+            key === "A"
+        ) {
+
+            keys.left = true;
+
+        }
+
+
+        if (
+            key === "ArrowRight" ||
+            key === "d" ||
+            key === "D"
+        ) {
+
+            keys.right = true;
+
+        }
+
+
+        if (
+            key === "ArrowUp" ||
+            key === " " ||
+            key === "w" ||
+            key === "W"
+        ) {
+
+            keys.jump = true;
+
+        }
+
+
+        if (
+            key === "f" ||
+            key === "F"
+        ) {
+
+            keys.shoot = true;
+
+        }
+
+    }
+);
+
+
+window.addEventListener(
+    "keyup",
+    (e) => {
+
+        const key =
+            e.key;
+
+
+        if (
+            key === "ArrowLeft" ||
+            key === "a" ||
+            key === "A"
+        ) {
+
+            keys.left = false;
+
+        }
+
+
+        if (
+            key === "ArrowRight" ||
+            key === "d" ||
+            key === "D"
+        ) {
+
+            keys.right = false;
+
+        }
+
+
+        if (
+            key === "ArrowUp" ||
+            key === " " ||
+            key === "w" ||
+            key === "W"
+        ) {
+
+            keys.jump = false;
+
+        }
+
+
+        if (
+            key === "f" ||
+            key === "F"
+        ) {
+
+            keys.shoot = false;
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   MOBILE CONTROLS
+========================================================= */
+
+function holdButton(
+    button,
+    onDown,
+    onUp
+) {
 
     if (!button) return;
 
-    button.addEventListener("pointerdown", (e) => {
-        e.preventDefault();
-        button.setPointerCapture?.(e.pointerId);
-        onDown();
-    });
 
-    button.addEventListener("pointerup", (e) => {
-        e.preventDefault();
+    const release = (e) => {
+
+        if (e) {
+            e.preventDefault();
+        }
+
         onUp();
-    });
 
-    button.addEventListener("pointercancel", onUp);
-    button.addEventListener("pointerleave", onUp);
+    };
+
+
+    button.addEventListener(
+        "pointerdown",
+        (e) => {
+
+            e.preventDefault();
+
+            try {
+
+                button.setPointerCapture(
+                    e.pointerId
+                );
+
+            } catch (_) {}
+
+            onDown();
+
+        },
+        {
+            passive: false
+        }
+    );
+
+
+    button.addEventListener(
+        "pointerup",
+        release,
+        {
+            passive: false
+        }
+    );
+
+
+    button.addEventListener(
+        "pointercancel",
+        release,
+        {
+            passive: false
+        }
+    );
+
+
+    button.addEventListener(
+        "lostpointercapture",
+        release
+    );
+
+
+    button.addEventListener(
+        "contextmenu",
+        (e) => {
+
+            e.preventDefault();
+
+        }
+    );
+
 }
+
 
 holdButton(
     $("leftButton"),
@@ -202,17 +439,20 @@ holdButton(
     () => keys.left = false
 );
 
+
 holdButton(
     $("rightButton"),
     () => keys.right = true,
     () => keys.right = false
 );
 
+
 holdButton(
     $("jumpButton"),
     () => keys.jump = true,
     () => keys.jump = false
 );
+
 
 holdButton(
     $("shootButton"),
@@ -228,7 +468,7 @@ holdButton(
 const player = {
 
     x: 100,
-    y: 200,
+    y: 100,
 
     width: 38,
     height: 62,
@@ -254,6 +494,7 @@ const player = {
     maxAmmo: 7,
 
     ammoTimer: 0
+
 };
 
 
@@ -272,200 +513,319 @@ let father = null;
 
 
 /* =========================================================
-   WORLD INFORMATION
+   WORLD DATA
 ========================================================= */
 
 const worlds = {
 
     1: {
+
         name: "جنگل",
+
         skyTop: "#54c7ff",
         skyBottom: "#b9f2ff",
+
         ground: "#4c9b35",
         grass: "#72c94b",
+
         platform: "#80552d",
+
         enemy: "snail"
+
     },
+
 
     2: {
+
         name: "برف",
+
         skyTop: "#8ddcff",
         skyBottom: "#eafaff",
+
         ground: "#dcecf2",
         grass: "#ffffff",
+
         platform: "#a8c9d6",
+
         enemy: "penguin"
+
     },
+
 
     3: {
+
         name: "آب",
+
         skyTop: "#35aee8",
         skyBottom: "#9de8ff",
+
         ground: "#176f8f",
         grass: "#39a9a1",
+
         platform: "#6b553e",
+
         enemy: "fish"
+
     },
 
+
     4: {
+
         name: "آتش",
+
         skyTop: "#541d26",
         skyBottom: "#d65b28",
+
         ground: "#4a2620",
         grass: "#d77b26",
+
         platform: "#703a28",
+
         enemy: "bomb"
+
     }
+
 };
 
 
 /* =========================================================
-   LEVEL GENERATION
+   CREATE LEVEL
 ========================================================= */
 
-function createLevel(world, level) {
+function createLevel(
+    world,
+    level
+) {
+
+    const groundHeight =
+        isLandscape
+            ? 75
+            : 90;
+
+
+    const groundY =
+        Math.max(
+            260,
+            canvasHeight -
+            groundHeight
+        );
+
 
     const data = {
 
-        width: 6500 + level * 250,
+        width:
+            6500 +
+            level * 250,
 
-        groundY: Math.max(320, canvasHeight - 90),
+        groundY,
 
         platforms: [],
+
         enemies: [],
+
         coins: [],
 
         flag: {
+
             x: 0,
             y: 0,
-            width: 50,
-            height: 100
+            width: 55,
+            height: 105
+
         },
 
         boss: null,
 
         father: null
+
     };
 
 
-    /*
-       شروع امن
-    */
+    /* زمین */
 
     data.platforms.push({
+
         x: 0,
+
         y: data.groundY,
+
         width: data.width,
-        height: 100,
+
+        height: 120,
+
         type: "ground"
+
     });
 
 
-    /*
-       سکوهای مرحله
-    */
+    /* سکوها */
 
-    const spacing = 330;
+    const spacing =
+        isLandscape
+            ? 360
+            : 330;
 
-    for (let i = 1; i < 18 + level; i++) {
 
-        const x = i * spacing + ((level * 37) % 100);
+    for (
+        let i = 1;
+        i < 18 + level;
+        i++
+    ) {
+
+        const x =
+            i * spacing +
+            ((level * 37) % 100);
+
 
         const heightOffset =
             50 +
             Math.sin(i * 1.7) * 35;
 
+
         const y =
             data.groundY -
-            Math.max(55, heightOffset);
+            Math.max(
+                55,
+                heightOffset
+            );
+
 
         data.platforms.push({
+
             x,
+
             y,
-            width: 150 + ((i * 47) % 90),
+
+            width:
+                150 +
+                ((i * 47) % 90),
+
             height: 24,
+
             type: "platform"
+
         });
+
     }
 
 
-    /*
-       سکه‌ها
-    */
+    /* سکه‌ها */
 
-    for (let i = 0; i < 32 + level * 3; i++) {
+    for (
+        let i = 0;
+        i < 32 + level * 3;
+        i++
+    ) {
 
-        const x = 220 + i * 180;
+        const x =
+            220 +
+            i * 180;
+
 
         const y =
             data.groundY -
             75 -
             ((i * 31) % 100);
 
+
         data.coins.push({
+
             x,
+
             y,
+
             radius: 12,
+
             collected: false,
-            spin: Math.random() * Math.PI * 2
+
+            spin:
+                Math.random() *
+                Math.PI *
+                2
+
         });
+
     }
 
 
-    /*
-       دشمن‌ها
-    */
+    /* دشمن‌ها */
 
-    for (let i = 0; i < 10 + level; i++) {
+    for (
+        let i = 0;
+        i < 10 + level;
+        i++
+    ) {
 
-        const x = 550 + i * 430;
+        const x =
+            550 +
+            i * 430;
+
 
         data.enemies.push({
+
             x,
-            y: data.groundY - 42,
+
+            y:
+                data.groundY -
+                42,
+
             width: 44,
+
             height: 38,
 
-            vx: i % 2 === 0 ? 1.1 : -1.1,
+            vx:
+                i % 2 === 0
+                    ? 1.1
+                    : -1.1,
 
-            leftLimit: x - 100,
-            rightLimit: x + 100,
+            leftLimit:
+                x - 100,
+
+            rightLimit:
+                x + 100,
 
             alive: true,
 
-            type: worlds[world].enemy,
+            type:
+                worlds[world].enemy,
 
-            anim: Math.random() * 10
+            anim:
+                Math.random() * 10
+
         });
+
     }
 
 
-    /*
-       پرچم
-    */
+    /* پرچم */
 
-    data.flag.x = data.width - 220;
-    data.flag.y = data.groundY - 105;
+    data.flag.x =
+        data.width - 220;
+
+    data.flag.y =
+        data.groundY - 105;
 
 
-    /*
-       Boss مرحله ۱۰
-    */
+    /* Boss */
 
     if (level === 10) {
 
         data.boss = {
 
-            x: data.width - 700,
+            x:
+                data.width - 700,
 
-            y: data.groundY - 100,
+            y:
+                data.groundY - 100,
 
             width: 82,
+
             height: 90,
 
             vx: -1.5,
 
             hp: 10,
+
             maxHp: 10,
 
             active: true,
@@ -473,24 +833,176 @@ function createLevel(world, level) {
             direction: -1,
 
             hitFlash: 0
+
         };
+
 
         data.father = {
 
-            x: data.width - 130,
+            x:
+                data.width - 130,
 
-            y: data.groundY - 110,
+            y:
+                data.groundY - 110,
 
             width: 75,
 
             height: 100,
 
             rescued: false
+
         };
+
     }
 
 
     return data;
+
+}
+
+
+/* =========================================================
+   RESPONSIVE LEVEL REBUILD
+========================================================= */
+
+function rebuildResponsiveLevel() {
+
+    if (!levelData) return;
+
+
+    const oldGround =
+        levelData.groundY;
+
+
+    const newGround =
+        Math.max(
+            260,
+            canvasHeight -
+            (
+                isLandscape
+                    ? 75
+                    : 90
+            )
+        );
+
+
+    const difference =
+        newGround -
+        oldGround;
+
+
+    if (Math.abs(difference) < 1) {
+        return;
+    }
+
+
+    levelData.groundY =
+        newGround;
+
+
+    for (
+        const platform of
+        levelData.platforms
+    ) {
+
+        if (
+            platform.type ===
+            "ground"
+        ) {
+
+            platform.y =
+                newGround;
+
+        }
+
+    }
+
+
+    /*
+       سکوهای شناور نسبت به زمین
+       جابه‌جا می‌شوند.
+    */
+
+    for (
+        const platform of
+        levelData.platforms
+    ) {
+
+        if (
+            platform.type !==
+            "ground"
+        ) {
+
+            platform.y +=
+                difference;
+
+        }
+
+    }
+
+
+    for (
+        const enemy of enemies
+    ) {
+
+        enemy.y +=
+            difference;
+
+    }
+
+
+    for (
+        const coin of levelCoins
+    ) {
+
+        coin.y +=
+            difference;
+
+    }
+
+
+    if (flag) {
+
+        flag.y =
+            newGround - 105;
+
+    }
+
+
+    if (boss) {
+
+        boss.y =
+            newGround - 100;
+
+    }
+
+
+    if (father) {
+
+        father.y =
+            newGround - 110;
+
+    }
+
+
+    /*
+       اگر بازیکن پایین زمین افتاده بود
+       دوباره روی زمین قرار می‌گیرد.
+    */
+
+    if (
+        player.y >
+        newGround + 100
+    ) {
+
+        player.y =
+            newGround -
+            player.height;
+
+        player.vy = 0;
+
+    }
+
 }
 
 
@@ -498,68 +1010,162 @@ function createLevel(world, level) {
    START LEVEL
 ========================================================= */
 
-function startLevel(world, level) {
+function startLevel(
+    world,
+    level
+) {
 
-    selectedWorld = world;
-    currentLevel = level;
+    /*
+       Session جدید
+       برای جلوگیری از چند حلقه بازی
+    */
 
-    levelData = createLevel(world, level);
+    gameSessionId++;
 
-    platforms = levelData.platforms;
-    enemies = levelData.enemies;
-    levelCoins = levelData.coins;
 
-    flag = levelData.flag;
-    boss = levelData.boss;
-    father = levelData.father;
+    if (
+        animationFrameId !== null
+    ) {
+
+        cancelAnimationFrame(
+            animationFrameId
+        );
+
+        animationFrameId =
+            null;
+
+    }
+
+
+    selectedWorld =
+        world;
+
+    currentLevel =
+        level;
+
+
+    levelData =
+        createLevel(
+            world,
+            level
+        );
+
+
+    platforms =
+        levelData.platforms;
+
+    enemies =
+        levelData.enemies;
+
+    levelCoins =
+        levelData.coins;
+
+    flag =
+        levelData.flag;
+
+    boss =
+        levelData.boss;
+
+    father =
+        levelData.father;
+
+
+    /* شروع مرحله */
 
     player.x = 100;
-    player.y = levelData.groundY - player.height - 20;
+
+    player.y =
+        levelData.groundY -
+        player.height -
+        5;
 
     player.vx = 0;
     player.vy = 0;
 
     player.onGround = false;
+
     player.direction = 1;
 
     player.invincible = 2;
 
     player.shootCooldown = 0;
-    player.ammo = player.maxAmmo;
+
+    player.ammo =
+        player.maxAmmo;
+
     player.ammoTimer = 0;
+
 
     cameraX = 0;
 
     bullets = [];
 
+
     gamePaused = false;
     gameOver = false;
     gameWon = false;
 
-    pauseMenu.classList.add("hidden");
-    gameOverMenu.classList.add("hidden");
-    winMenu.classList.add("hidden");
 
-    mainMenu.classList.add("hidden");
-    worldMenu.classList.add("hidden");
-    levelMenu.classList.add("hidden");
+    pauseMenu.classList.add(
+        "hidden"
+    );
 
-    gameScreen.classList.remove("hidden");
+    gameOverMenu.classList.add(
+        "hidden"
+    );
+
+    winMenu.classList.add(
+        "hidden"
+    );
+
+
+    mainMenu.classList.add(
+        "hidden"
+    );
+
+    worldMenu.classList.add(
+        "hidden"
+    );
+
+    levelMenu.classList.add(
+        "hidden"
+    );
+
+    gameScreen.classList.remove(
+        "hidden"
+    );
+
 
     resizeCanvas();
 
     updateHUD();
+
 
     showMessage(
         `دنیای ${world} - مرحله ${level}`,
         1800
     );
 
+
     gameRunning = true;
 
-    lastTime = performance.now();
+    lastTime =
+        performance.now();
 
-    requestAnimationFrame(gameLoop);
+
+    const session =
+        gameSessionId;
+
+
+    animationFrameId =
+        requestAnimationFrame(
+            (time) =>
+                gameLoop(
+                    time,
+                    session
+                )
+        );
+
 }
 
 
@@ -567,92 +1173,183 @@ function startLevel(world, level) {
    MENU
 ========================================================= */
 
-startGameButton.addEventListener("click", () => {
+startGameButton.addEventListener(
+    "click",
+    () => {
 
-    startLevel(1, 1);
+        lives = 3;
+        coins = 0;
+        score = 0;
 
-});
+        startLevel(1, 1);
 
-worldSelectButton.addEventListener("click", () => {
+    }
+);
 
-    mainMenu.classList.add("hidden");
-    worldMenu.classList.remove("hidden");
 
-});
+worldSelectButton.addEventListener(
+    "click",
+    () => {
 
-settingsButton.addEventListener("click", () => {
+        mainMenu.classList.add(
+            "hidden"
+        );
 
-    alert(
-        "⚙️ تنظیمات بازی\n\n" +
-        "صدا و امکانات بیشتر در نسخه بعدی اضافه می‌شوند."
+        worldMenu.classList.remove(
+            "hidden"
+        );
+
+    }
+);
+
+
+settingsButton.addEventListener(
+    "click",
+    () => {
+
+        alert(
+            "⚙️ تنظیمات بازی\n\n" +
+            "نسخه صوتی و امکانات بیشتر " +
+            "به‌زودی اضافه می‌شوند."
+        );
+
+    }
+);
+
+
+backFromWorlds.addEventListener(
+    "click",
+    () => {
+
+        worldMenu.classList.add(
+            "hidden"
+        );
+
+        mainMenu.classList.remove(
+            "hidden"
+        );
+
+    }
+);
+
+
+backFromLevels.addEventListener(
+    "click",
+    () => {
+
+        levelMenu.classList.add(
+            "hidden"
+        );
+
+        worldMenu.classList.remove(
+            "hidden"
+        );
+
+    }
+);
+
+
+/* =========================================================
+   WORLD SELECT
+========================================================= */
+
+document
+    .querySelectorAll(".world-card")
+    .forEach(
+        (card) => {
+
+            card.addEventListener(
+                "click",
+                () => {
+
+                    const world =
+                        Number(
+                            card.dataset.world
+                        );
+
+                    selectedWorld =
+                        world;
+
+                    openLevelMenu(
+                        world
+                    );
+
+                }
+            );
+
+        }
     );
-
-});
-
-
-backFromWorlds.addEventListener("click", () => {
-
-    worldMenu.classList.add("hidden");
-    mainMenu.classList.remove("hidden");
-
-});
-
-
-backFromLevels.addEventListener("click", () => {
-
-    levelMenu.classList.add("hidden");
-    worldMenu.classList.remove("hidden");
-
-});
-
-
-document.querySelectorAll(".world-card").forEach(card => {
-
-    card.addEventListener("click", () => {
-
-        const world = Number(card.dataset.world);
-
-        selectedWorld = world;
-
-        openLevelMenu(world);
-
-    });
-
-});
 
 
 /* =========================================================
    LEVEL MENU
 ========================================================= */
 
-function openLevelMenu(world) {
+function openLevelMenu(
+    world
+) {
 
-    selectedWorld = world;
+    selectedWorld =
+        world;
 
-    worldMenu.classList.add("hidden");
-    levelMenu.classList.remove("hidden");
+    worldMenu.classList.add(
+        "hidden"
+    );
 
-    levelList.innerHTML = "";
+    levelMenu.classList.remove(
+        "hidden"
+    );
 
-    for (let i = 1; i <= 10; i++) {
 
-        const button = document.createElement("button");
+    levelList.innerHTML =
+        "";
 
-        button.className = "level-button";
 
-        button.textContent = i;
+    for (
+        let i = 1;
+        i <= 10;
+        i++
+    ) {
+
+        const button =
+            document.createElement(
+                "button"
+            );
+
+
+        button.className =
+            "level-button";
+
+
+        button.textContent =
+            i;
+
 
         button.title =
             `دنیای ${world} - مرحله ${i}`;
 
-        button.addEventListener("click", () => {
 
-            startLevel(world, i);
+        button.addEventListener(
+            "click",
+            () => {
 
-        });
+                lives = 3;
 
-        levelList.appendChild(button);
+                startLevel(
+                    world,
+                    i
+                );
+
+            }
+        );
+
+
+        levelList.appendChild(
+            button
+        );
+
     }
+
 }
 
 
@@ -660,118 +1357,234 @@ function openLevelMenu(world) {
    PAUSE
 ========================================================= */
 
-pauseButton.addEventListener("click", () => {
+pauseButton.addEventListener(
+    "click",
+    () => {
 
-    if (!gameRunning || gameOver || gameWon) return;
-
-    gamePaused = true;
-
-    pauseMenu.classList.remove("hidden");
-
-});
-
-
-resumeButton.addEventListener("click", () => {
-
-    gamePaused = false;
-
-    pauseMenu.classList.add("hidden");
-
-    lastTime = performance.now();
-
-});
+        if (
+            !gameRunning ||
+            gameOver ||
+            gameWon
+        ) {
+            return;
+        }
 
 
-restartButton.addEventListener("click", () => {
+        gamePaused = true;
 
-    lives = 3;
-    coins = 0;
-    score = 0;
+        pauseMenu.classList.remove(
+            "hidden"
+        );
 
-    startLevel(selectedWorld, currentLevel);
-
-});
-
-
-exitButton.addEventListener("click", () => {
-
-    gameRunning = false;
-
-    gamePaused = false;
-
-    pauseMenu.classList.add("hidden");
-    gameScreen.classList.add("hidden");
-
-    mainMenu.classList.remove("hidden");
-
-});
+    }
+);
 
 
-tryAgainButton.addEventListener("click", () => {
+resumeButton.addEventListener(
+    "click",
+    () => {
 
-    lives = 3;
+        gamePaused = false;
 
-    startLevel(selectedWorld, currentLevel);
+        pauseMenu.classList.add(
+            "hidden"
+        );
 
-});
+        lastTime =
+            performance.now();
+
+    }
+);
 
 
-gameOverHome.addEventListener("click", () => {
+restartButton.addEventListener(
+    "click",
+    () => {
 
-    gameRunning = false;
+        lives = 3;
+        coins = 0;
+        score = 0;
 
-    gameOverMenu.classList.add("hidden");
-    gameScreen.classList.add("hidden");
+        startLevel(
+            selectedWorld,
+            currentLevel
+        );
 
-    mainMenu.classList.remove("hidden");
+    }
+);
 
-});
+
+exitButton.addEventListener(
+    "click",
+    () => {
+
+        stopGame();
+
+        pauseMenu.classList.add(
+            "hidden"
+        );
+
+        gameScreen.classList.add(
+            "hidden"
+        );
+
+        mainMenu.classList.remove(
+            "hidden"
+        );
+
+    }
+);
+
+
+tryAgainButton.addEventListener(
+    "click",
+    () => {
+
+        lives = 3;
+
+        startLevel(
+            selectedWorld,
+            currentLevel
+        );
+
+    }
+);
+
+
+gameOverHome.addEventListener(
+    "click",
+    () => {
+
+        stopGame();
+
+        gameOverMenu.classList.add(
+            "hidden"
+        );
+
+        gameScreen.classList.add(
+            "hidden"
+        );
+
+        mainMenu.classList.remove(
+            "hidden"
+        );
+
+    }
+);
 
 
 /* =========================================================
    WIN
 ========================================================= */
 
-nextLevelButton.addEventListener("click", () => {
+nextLevelButton.addEventListener(
+    "click",
+    () => {
 
-    winMenu.classList.add("hidden");
-
-    if (currentLevel < 10) {
-
-        startLevel(
-            selectedWorld,
-            currentLevel + 1
+        winMenu.classList.add(
+            "hidden"
         );
 
-        return;
+
+        if (
+            currentLevel < 10
+        ) {
+
+            startLevel(
+                selectedWorld,
+                currentLevel + 1
+            );
+
+            return;
+
+        }
+
+
+        if (
+            selectedWorld < 4
+        ) {
+
+            startLevel(
+                selectedWorld + 1,
+                1
+            );
+
+            return;
+
+        }
+
+
+        showFinalVictory();
+
     }
+);
 
 
-    if (selectedWorld < 4) {
+winHomeButton.addEventListener(
+    "click",
+    () => {
 
-        startLevel(
-            selectedWorld + 1,
-            1
+        stopGame();
+
+        winMenu.classList.add(
+            "hidden"
         );
 
-        return;
+        gameScreen.classList.add(
+            "hidden"
+        );
+
+        mainMenu.classList.remove(
+            "hidden"
+        );
+
     }
+);
 
 
-    showFinalVictory();
-});
+/* =========================================================
+   STOP GAME
+========================================================= */
 
-
-winHomeButton.addEventListener("click", () => {
+function stopGame() {
 
     gameRunning = false;
 
-    winMenu.classList.add("hidden");
-    gameScreen.classList.add("hidden");
+    gamePaused = false;
 
-    mainMenu.classList.remove("hidden");
+    gameOver = false;
 
-});
+    gameWon = false;
+
+
+    gameSessionId++;
+
+
+    if (
+        animationFrameId !== null
+    ) {
+
+        cancelAnimationFrame(
+            animationFrameId
+        );
+
+        animationFrameId =
+            null;
+
+    }
+
+
+    /*
+       کلیدها را آزاد می‌کنیم
+       تا بعد از خروج گیر نکنند.
+    */
+
+    keys.left = false;
+    keys.right = false;
+    keys.jump = false;
+    keys.shoot = false;
+
+}
 
 
 /* =========================================================
@@ -779,6 +1592,7 @@ winHomeButton.addEventListener("click", () => {
 ========================================================= */
 
 const gravity = 0.65;
+
 
 function updatePlayer(dt) {
 
@@ -789,98 +1603,176 @@ function updatePlayer(dt) {
 
     if (keys.left) {
 
-        player.vx -= 0.55;
+        player.vx -=
+            0.55;
 
-        player.direction = -1;
+        player.direction =
+            -1;
 
     }
 
+
     if (keys.right) {
 
-        player.vx += 0.55;
+        player.vx +=
+            0.55;
 
-        player.direction = 1;
+        player.direction =
+            1;
 
     }
 
 
     /* اصطکاک */
 
-    player.vx *= 0.82;
+    player.vx *=
+        0.82;
 
 
-    /* محدودیت سرعت */
+    /* سرعت */
 
-    if (player.vx > player.speed) {
-        player.vx = player.speed;
+    if (
+        player.vx >
+        player.speed
+    ) {
+
+        player.vx =
+            player.speed;
+
     }
 
-    if (player.vx < -player.speed) {
-        player.vx = -player.speed;
+
+    if (
+        player.vx <
+        -player.speed
+    ) {
+
+        player.vx =
+            -player.speed;
+
     }
 
 
     /* پرش */
 
-    if (keys.jump && player.onGround) {
+    if (
+        keys.jump &&
+        player.onGround
+    ) {
 
-        player.vy = -player.jumpPower;
+        player.vy =
+            -player.jumpPower;
 
-        player.onGround = false;
+        player.onGround =
+            false;
+
+        /*
+           فقط یک پرش برای هر لمس
+        */
+
+        keys.jump = false;
 
     }
 
 
     /* جاذبه */
 
-    player.vy += gravity;
+    player.vy +=
+        gravity;
 
 
     /* حرکت */
 
-    player.x += player.vx;
+    player.x +=
+        player.vx;
 
-    player.y += player.vy;
+    player.y +=
+        player.vy;
 
 
     /* مرز چپ */
 
-    if (player.x < 0) {
+    if (
+        player.x < 0
+    ) {
 
         player.x = 0;
+
         player.vx = 0;
 
     }
 
 
-    /* برخورد با زمین و سکو */
+    /* مرز راست */
 
-    player.onGround = false;
+    if (
+        levelData &&
+        player.x >
+        levelData.width -
+        player.width
+    ) {
 
-    for (const platform of platforms) {
+        player.x =
+            levelData.width -
+            player.width;
 
-        if (
-            player.x + player.width > platform.x &&
-            player.x < platform.x + platform.width &&
-            player.y + player.height >= platform.y &&
-            player.y + player.height <= platform.y + platform.height + 18 &&
-            player.vy >= 0
-        ) {
-
-            player.y =
-                platform.y - player.height;
-
-            player.vy = 0;
-
-            player.onGround = true;
-
-        }
     }
 
 
-    /* افتادن */
+    /* برخورد با سکو */
 
-    if (player.y > canvasHeight + 200) {
+    player.onGround =
+        false;
+
+
+    for (
+        const platform of platforms
+    ) {
+
+        if (
+
+            player.x +
+                player.width >
+                platform.x &&
+
+            player.x <
+                platform.x +
+                platform.width &&
+
+            player.y +
+                player.height >=
+                platform.y &&
+
+            player.y +
+                player.height <=
+                platform.y +
+                platform.height +
+                18 &&
+
+            player.vy >= 0
+
+        ) {
+
+            player.y =
+                platform.y -
+                player.height;
+
+            player.vy = 0;
+
+            player.onGround =
+                true;
+
+        }
+
+    }
+
+
+    /* سقوط */
+
+    if (
+        player.y >
+        canvasHeight + 200
+    ) {
 
         loseLife();
 
@@ -889,23 +1781,32 @@ function updatePlayer(dt) {
 
     /* انیمیشن */
 
-    player.animTime += Math.abs(player.vx) * 0.15;
+    player.animTime +=
+        Math.abs(
+            player.vx
+        ) * 0.15;
 
 
     /* آسیب‌ناپذیری */
 
-    if (player.invincible > 0) {
+    if (
+        player.invincible > 0
+    ) {
 
-        player.invincible -= dt;
+        player.invincible -=
+            dt;
 
     }
 
 
     /* شلیک */
 
-    if (player.shootCooldown > 0) {
+    if (
+        player.shootCooldown > 0
+    ) {
 
-        player.shootCooldown -= dt;
+        player.shootCooldown -=
+            dt;
 
     }
 
@@ -919,33 +1820,61 @@ function updatePlayer(dt) {
 
     /* شارژ مهمات */
 
-    if (player.ammo < player.maxAmmo) {
+    if (
+        player.ammo <
+        player.maxAmmo
+    ) {
 
-        player.ammoTimer += dt;
+        player.ammoTimer +=
+            dt;
 
-        if (player.ammoTimer >= 2.5) {
+
+        if (
+            player.ammoTimer >=
+            2.5
+        ) {
 
             player.ammo++;
 
-            player.ammoTimer = 0;
+            player.ammoTimer =
+                0;
 
         }
+
     }
+
 }
 
 
 /* =========================================================
-   COLLISION HELPER
+   COLLISION
 ========================================================= */
 
-function rectanglesOverlap(a, b) {
+function rectanglesOverlap(
+    a,
+    b
+) {
 
     return (
-        a.x < b.x + b.width &&
-        a.x + a.width > b.x &&
-        a.y < b.y + b.height &&
-        a.y + a.height > b.y
+
+        a.x <
+            b.x +
+            b.width &&
+
+        a.x +
+            a.width >
+            b.x &&
+
+        a.y <
+            b.y +
+            b.height &&
+
+        a.y +
+            a.height >
+            b.y
+
     );
+
 }
 
 
@@ -955,44 +1884,83 @@ function rectanglesOverlap(a, b) {
 
 function updateEnemies() {
 
-    for (const enemy of enemies) {
+    for (
+        const enemy of enemies
+    ) {
 
-        if (!enemy.alive) continue;
-
-        enemy.x += enemy.vx;
-
-        enemy.anim += 0.08;
+        if (
+            !enemy.alive
+        ) continue;
 
 
-        if (enemy.x <= enemy.leftLimit) {
+        enemy.x +=
+            enemy.vx;
 
-            enemy.x = enemy.leftLimit;
 
-            enemy.vx = Math.abs(enemy.vx);
+        enemy.anim +=
+            0.08;
+
+
+        if (
+            enemy.x <=
+            enemy.leftLimit
+        ) {
+
+            enemy.x =
+                enemy.leftLimit;
+
+            enemy.vx =
+                Math.abs(
+                    enemy.vx
+                );
 
         }
 
 
-        if (enemy.x >= enemy.rightLimit) {
+        if (
+            enemy.x >=
+            enemy.rightLimit
+        ) {
 
-            enemy.x = enemy.rightLimit;
+            enemy.x =
+                enemy.rightLimit;
 
-            enemy.vx = -Math.abs(enemy.vx);
+            enemy.vx =
+                -Math.abs(
+                    enemy.vx
+                );
 
         }
 
 
-        if (rectanglesOverlap(player, enemy)) {
+        if (
+            rectanglesOverlap(
+                player,
+                enemy
+            )
+        ) {
 
-            if (player.vy > 0 && player.y + player.height - enemy.y < 25) {
+            if (
+                player.vy > 0 &&
+                player.y +
+                    player.height -
+                    enemy.y <
+                    25
+            ) {
 
-                enemy.alive = false;
+                enemy.alive =
+                    false;
 
-                player.vy = -8;
+                player.vy =
+                    -8;
 
-                score += 100;
+                score +=
+                    100;
 
-                showMessage("+100", 500);
+                showMessage(
+                    "+100",
+                    500
+                );
 
             }
             else {
@@ -1000,8 +1968,11 @@ function updateEnemies() {
                 hurtPlayer();
 
             }
+
         }
+
     }
+
 }
 
 
@@ -1011,77 +1982,147 @@ function updateEnemies() {
 
 function shoot() {
 
-    if (player.shootCooldown > 0) return;
-
-    if (player.ammo <= 0) {
-
-        showMessage("گلوله تمام شد!", 700);
-
+    if (
+        player.shootCooldown > 0
+    ) {
         return;
     }
+
+
+    if (
+        player.ammo <= 0
+    ) {
+
+        showMessage(
+            "گلوله تمام شد!",
+            700
+        );
+
+        return;
+
+    }
+
 
     player.ammo--;
 
     player.ammoTimer = 0;
 
-    player.shootCooldown = 0.28;
+    player.shootCooldown =
+        0.28;
+
 
     bullets.push({
 
         x:
             player.direction === 1
-                ? player.x + player.width
+                ? player.x +
+                  player.width
                 : player.x - 12,
 
-        y: player.y + 25,
+        y:
+            player.y + 25,
 
         width: 13,
+
         height: 7,
 
-        vx: player.direction * 11,
+        vx:
+            player.direction *
+            11,
 
         life: 2
 
     });
+
 }
 
 
+/* =========================================================
+   BULLETS
+========================================================= */
+
 function updateBullets(dt) {
 
-    for (let i = bullets.length - 1; i >= 0; i--) {
+    for (
+        let i =
+            bullets.length - 1;
+        i >= 0;
+        i--
+    ) {
 
-        const bullet = bullets[i];
-
-        bullet.x += bullet.vx;
-
-        bullet.life -= dt;
+        const bullet =
+            bullets[i];
 
 
-        if (bullet.life <= 0) {
+        bullet.x +=
+            bullet.vx;
 
-            bullets.splice(i, 1);
+
+        bullet.life -=
+            dt;
+
+
+        if (
+            bullet.life <= 0
+        ) {
+
+            bullets.splice(
+                i,
+                1
+            );
 
             continue;
 
         }
 
 
+        let destroyed =
+            false;
+
+
         /* دشمن */
 
-        for (const enemy of enemies) {
+        for (
+            const enemy of enemies
+        ) {
 
-            if (!enemy.alive) continue;
+            if (
+                !enemy.alive
+            ) continue;
 
-            if (rectanglesOverlap(bullet, enemy)) {
 
-                enemy.alive = false;
+            if (
+                rectanglesOverlap(
+                    bullet,
+                    enemy
+                )
+            ) {
 
-                score += 100;
+                enemy.alive =
+                    false;
 
-                bullets.splice(i, 1);
+                score +=
+                    100;
+
+                destroyed =
+                    true;
 
                 break;
+
             }
+
+        }
+
+
+        if (destroyed) {
+
+            bullets.splice(
+                i,
+                1
+            );
+
+            continue;
+
         }
 
 
@@ -1090,22 +2131,36 @@ function updateBullets(dt) {
         if (
             boss &&
             boss.active &&
-            rectanglesOverlap(bullet, boss)
+            rectanglesOverlap(
+                bullet,
+                boss
+            )
         ) {
 
             boss.hp--;
 
-            boss.hitFlash = 0.15;
+            boss.hitFlash =
+                0.15;
 
-            score += 50;
+            score +=
+                50;
 
-            bullets.splice(i, 1);
 
-            if (boss.hp <= 0) {
+            bullets.splice(
+                i,
+                1
+            );
 
-                boss.active = false;
 
-                score += 1000;
+            if (
+                boss.hp <= 0
+            ) {
+
+                boss.active =
+                    false;
+
+                score +=
+                    1000;
 
                 showMessage(
                     "🏆 غول مرحله شکست خورد!",
@@ -1113,8 +2168,11 @@ function updateBullets(dt) {
                 );
 
             }
+
         }
+
     }
+
 }
 
 
@@ -1122,38 +2180,63 @@ function updateBullets(dt) {
    BOSS
 ========================================================= */
 
-function updateBoss() {
+function updateBoss(dt) {
 
-    if (!boss || !boss.active) return;
+    if (
+        !boss ||
+        !boss.active
+    ) {
+        return;
+    }
 
-    boss.x += boss.vx;
+
+    boss.x +=
+        boss.vx;
+
 
     boss.direction =
-        boss.vx >= 0 ? 1 : -1;
+        boss.vx >= 0
+            ? 1
+            : -1;
 
 
     if (
-        boss.x < levelData.width - 950 ||
-        boss.x > levelData.width - 450
+        boss.x <
+            levelData.width -
+            950 ||
+
+        boss.x >
+            levelData.width -
+            450
     ) {
 
-        boss.vx *= -1;
+        boss.vx *=
+            -1;
 
     }
 
 
-    if (boss.hitFlash > 0) {
+    if (
+        boss.hitFlash > 0
+    ) {
 
-        boss.hitFlash -= 0.016;
+        boss.hitFlash -=
+            dt;
 
     }
 
 
-    if (rectanglesOverlap(player, boss)) {
+    if (
+        rectanglesOverlap(
+            player,
+            boss
+        )
+    ) {
 
         hurtPlayer();
 
     }
+
 }
 
 
@@ -1163,43 +2246,67 @@ function updateBoss() {
 
 function updateCoins() {
 
-    for (const coin of levelCoins) {
+    for (
+        const coin of levelCoins
+    ) {
 
-        if (coin.collected) continue;
+        if (
+            coin.collected
+        ) {
+            continue;
+        }
 
-        coin.spin += 0.08;
+
+        coin.spin +=
+            0.08;
+
 
         const dx =
-            player.x + player.width / 2 -
+            player.x +
+            player.width / 2 -
             coin.x;
 
+
         const dy =
-            player.y + player.height / 2 -
+            player.y +
+            player.height / 2 -
             coin.y;
 
+
         const distance =
-            Math.sqrt(dx * dx + dy * dy);
+            Math.sqrt(
+                dx * dx +
+                dy * dy
+            );
 
-        if (distance < 35) {
 
-            coin.collected = true;
+        if (
+            distance < 35
+        ) {
+
+            coin.collected =
+                true;
 
             coins++;
 
-            score += 25;
+            score +=
+                25;
 
         }
+
     }
+
 }
 
 
 /* =========================================================
-   FLAG / FINISH
+   FINISH
 ========================================================= */
 
 function checkFinish() {
 
     if (!flag) return;
+
 
     const flagBox = {
 
@@ -1214,11 +2321,21 @@ function checkFinish() {
     };
 
 
-    if (rectanglesOverlap(player, flagBox)) {
+    if (
+        rectanglesOverlap(
+            player,
+            flagBox
+        )
+    ) {
 
-        if (currentLevel === 10) {
+        if (
+            currentLevel === 10
+        ) {
 
-            if (boss && boss.active) {
+            if (
+                boss &&
+                boss.active
+            ) {
 
                 showMessage(
                     "اول غول مرحله را شکست بده!",
@@ -1230,31 +2347,51 @@ function checkFinish() {
             }
 
 
-            if (father && !father.rescued) {
+            if (
+                father &&
+                !father.rescued
+            ) {
 
-                father.rescued = true;
+                father.rescued =
+                    true;
 
-                score += 2000;
+                score +=
+                    2000;
 
                 showMessage(
                     "👨‍👧 پدرت را نجات دادی!",
                     1800
                 );
 
-                setTimeout(() => {
 
-                    completeLevel();
+                setTimeout(
+                    () => {
 
-                }, 1500);
+                        if (
+                            gameRunning &&
+                            !gameWon
+                        ) {
+
+                            completeLevel();
+
+                        }
+
+                    },
+                    1500
+                );
+
 
                 return;
+
             }
+
         }
 
 
         completeLevel();
 
     }
+
 }
 
 
@@ -1264,14 +2401,42 @@ function checkFinish() {
 
 function completeLevel() {
 
-    if (gameWon) return;
+    if (
+        gameWon
+    ) {
+        return;
+    }
 
-    gameWon = true;
-    gameRunning = false;
 
-    winScore.textContent = score;
+    gameWon =
+        true;
 
-    winMenu.classList.remove("hidden");
+    gameRunning =
+        false;
+
+
+    if (
+        animationFrameId !== null
+    ) {
+
+        cancelAnimationFrame(
+            animationFrameId
+        );
+
+        animationFrameId =
+            null;
+
+    }
+
+
+    winScore.textContent =
+        score;
+
+
+    winMenu.classList.remove(
+        "hidden"
+    );
+
 
     if (
         selectedWorld === 4 &&
@@ -1282,7 +2447,9 @@ function completeLevel() {
             "🏆 پایان بازی";
 
     }
-    else if (currentLevel === 10) {
+    else if (
+        currentLevel === 10
+    ) {
 
         nextLevelButton.textContent =
             "🌍 دنیای بعد";
@@ -1294,6 +2461,7 @@ function completeLevel() {
             "🚩 مرحله بعد";
 
     }
+
 }
 
 
@@ -1303,10 +2471,16 @@ function completeLevel() {
 
 function showFinalVictory() {
 
-    winMenu.classList.remove("hidden");
+    winMenu.classList.remove(
+        "hidden"
+    );
+
 
     const title =
-        winMenu.querySelector("h2");
+        winMenu.querySelector(
+            "h2"
+        );
+
 
     if (title) {
 
@@ -1315,31 +2489,72 @@ function showFinalVictory() {
 
     }
 
-    const paragraphs =
-        winMenu.querySelectorAll("p");
 
-    if (paragraphs[0]) {
+    const paragraphs =
+        winMenu.querySelectorAll(
+            "p"
+        );
+
+
+    if (
+        paragraphs[0]
+    ) {
 
         paragraphs[0].textContent =
             "همه دنیاها را پشت سر گذاشتی و پدرت را نجات دادی! 👨‍👧";
 
     }
 
+
     nextLevelButton.textContent =
         "🏠 بازگشت به خانه";
 
-    nextLevelButton.onclick = () => {
 
-        winMenu.classList.add("hidden");
+    /*
+       به جای onclick جدید،
+       یک حالت نهایی تعریف می‌کنیم.
+    */
 
-        gameScreen.classList.add("hidden");
+    nextLevelButton.dataset.final =
+        "true";
 
-        mainMenu.classList.remove("hidden");
-
-        gameRunning = false;
-
-    };
 }
+
+
+/* =========================================================
+   FINAL BUTTON HANDLER
+========================================================= */
+
+nextLevelButton.addEventListener(
+    "click",
+    () => {
+
+        if (
+            nextLevelButton.dataset.final ===
+            "true"
+        ) {
+
+            nextLevelButton.dataset.final =
+                "false";
+
+            winMenu.classList.add(
+                "hidden"
+            );
+
+            gameScreen.classList.add(
+                "hidden"
+            );
+
+            mainMenu.classList.remove(
+                "hidden"
+            );
+
+            stopGame();
+
+        }
+
+    }
+);
 
 
 /* =========================================================
@@ -1348,15 +2563,25 @@ function showFinalVictory() {
 
 function hurtPlayer() {
 
-    if (player.invincible > 0) return;
+    if (
+        player.invincible > 0
+    ) {
+        return;
+    }
+
 
     lives--;
 
     updateHUD();
 
-    player.invincible = 2;
 
-    player.vy = -8;
+    player.invincible =
+        2;
+
+
+    player.vy =
+        -8;
+
 
     player.vx =
         player.direction === 1
@@ -1364,7 +2589,9 @@ function hurtPlayer() {
             : 6;
 
 
-    if (lives <= 0) {
+    if (
+        lives <= 0
+    ) {
 
         triggerGameOver();
 
@@ -1373,32 +2600,48 @@ function hurtPlayer() {
     }
 
 
-    player.x = Math.max(
-        100,
-        player.x - 120
-    );
+    player.x =
+        Math.max(
+            100,
+            player.x - 120
+        );
+
 
     player.y =
         levelData.groundY -
         player.height -
         50;
 
+
     showMessage(
         "❤️ یک جان کم شد!",
         900
     );
+
 }
 
 
+/* =========================================================
+   LOSE LIFE
+========================================================= */
+
 function loseLife() {
 
-    if (player.invincible > 0) return;
+    if (
+        player.invincible > 0
+    ) {
+        return;
+    }
+
 
     lives--;
 
     updateHUD();
 
-    if (lives <= 0) {
+
+    if (
+        lives <= 0
+    ) {
 
         triggerGameOver();
 
@@ -1406,24 +2649,31 @@ function loseLife() {
 
     }
 
-    player.x = Math.max(
-        100,
-        player.x - 200
-    );
+
+    player.x =
+        Math.max(
+            100,
+            player.x - 200
+        );
+
 
     player.y =
         levelData.groundY -
         player.height -
         100;
 
+
     player.vy = 0;
 
-    player.invincible = 2;
+    player.invincible =
+        2;
+
 
     showMessage(
         "⚠️ مراقب باش!",
         900
     );
+
 }
 
 
@@ -1433,12 +2683,34 @@ function loseLife() {
 
 function triggerGameOver() {
 
-    gameOver = true;
-    gameRunning = false;
+    gameOver =
+        true;
 
-    finalScore.textContent = score;
+    gameRunning =
+        false;
 
-    gameOverMenu.classList.remove("hidden");
+
+    if (
+        animationFrameId !== null
+    ) {
+
+        cancelAnimationFrame(
+            animationFrameId
+        );
+
+        animationFrameId =
+            null;
+
+    }
+
+
+    finalScore.textContent =
+        score;
+
+
+    gameOverMenu.classList.remove(
+        "hidden"
+    );
 
 }
 
@@ -1449,16 +2721,29 @@ function triggerGameOver() {
 
 function updateCamera() {
 
+    if (!levelData) return;
+
+
     const target =
         player.x -
-        canvasWidth * 0.38;
+        canvasWidth *
+        (
+            isLandscape
+                ? 0.42
+                : 0.38
+        );
 
 
     cameraX +=
-        (target - cameraX) * 0.08;
+        (
+            target -
+            cameraX
+        ) * 0.08;
 
 
-    if (cameraX < 0) {
+    if (
+        cameraX < 0
+    ) {
 
         cameraX = 0;
 
@@ -1473,11 +2758,16 @@ function updateCamera() {
         );
 
 
-    if (cameraX > maxCamera) {
+    if (
+        cameraX >
+        maxCamera
+    ) {
 
-        cameraX = maxCamera;
+        cameraX =
+            maxCamera;
 
     }
+
 }
 
 
@@ -1487,60 +2777,122 @@ function updateCamera() {
 
 let ammoHud = null;
 
+
 function createAmmoHud() {
 
-    if (ammoHud) return;
+    if (ammoHud) {
+        return;
+    }
+
 
     ammoHud =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
-    ammoHud.id = "ammoHud";
 
-    ammoHud.style.position = "absolute";
-    ammoHud.style.top = "68px";
-    ammoHud.style.left = "50%";
-    ammoHud.style.transform = "translateX(-50%)";
+    ammoHud.id =
+        "ammoHud";
 
-    ammoHud.style.padding = "7px 12px";
 
-    ammoHud.style.borderRadius = "12px";
+    ammoHud.style.position =
+        "absolute";
+
+
+    ammoHud.style.top =
+        "68px";
+
+
+    ammoHud.style.left =
+        "50%";
+
+
+    ammoHud.style.transform =
+        "translateX(-50%)";
+
+
+    ammoHud.style.padding =
+        "7px 12px";
+
+
+    ammoHud.style.borderRadius =
+        "12px";
+
 
     ammoHud.style.background =
         "rgba(0,0,0,0.55)";
 
+
     ammoHud.style.border =
         "2px solid rgba(255,255,255,0.8)";
 
-    ammoHud.style.color = "white";
 
-    ammoHud.style.fontWeight = "bold";
+    ammoHud.style.color =
+        "white";
 
-    ammoHud.style.fontSize = "13px";
 
-    ammoHud.style.zIndex = "120";
+    ammoHud.style.fontWeight =
+        "bold";
 
-    gameScreen.appendChild(ammoHud);
+
+    ammoHud.style.fontSize =
+        "13px";
+
+
+    ammoHud.style.zIndex =
+        "120";
+
+
+    ammoHud.style.pointerEvents =
+        "none";
+
+
+    gameScreen.appendChild(
+        ammoHud
+    );
+
 }
 
 
 function updateHUD() {
 
-    livesText.textContent = lives;
+    livesText.textContent =
+        lives;
 
-    coinsText.textContent = coins;
 
-    scoreText.textContent = score;
+    coinsText.textContent =
+        coins;
+
+
+    scoreText.textContent =
+        score;
+
 
     currentWorldText.textContent =
         selectedWorld;
 
+
     currentLevelText.textContent =
         currentLevel;
 
+
     createAmmoHud();
+
 
     ammoHud.textContent =
         `🔴 گلوله: ${player.ammo} / ${player.maxAmmo}`;
+
+
+    /*
+       در حالت افقی کمی پایین‌تر
+       از HUD قرار می‌گیرد.
+    */
+
+    ammoHud.style.top =
+        isLandscape
+            ? "55px"
+            : "68px";
+
 }
 
 
@@ -1548,31 +2900,50 @@ function updateHUD() {
    MESSAGE
 ========================================================= */
 
-let messageTimer = null;
+let messageTimer =
+    null;
 
-function showMessage(text, duration = 1000) {
 
-    gameMessage.textContent = text;
+function showMessage(
+    text,
+    duration = 1000
+) {
 
-    gameMessage.style.opacity = "1";
+    gameMessage.textContent =
+        text;
 
-    clearTimeout(messageTimer);
 
-    messageTimer = setTimeout(() => {
+    gameMessage.style.opacity =
+        "1";
 
-        gameMessage.style.opacity = "0";
 
-    }, duration);
+    clearTimeout(
+        messageTimer
+    );
+
+
+    messageTimer =
+        setTimeout(
+            () => {
+
+                gameMessage.style.opacity =
+                    "0";
+
+            },
+            duration
+        );
+
 }
 
 
 /* =========================================================
-   DRAW BACKGROUND
+   BACKGROUND
 ========================================================= */
 
 function drawBackground() {
 
-    const world = worlds[selectedWorld];
+    const world =
+        worlds[selectedWorld];
 
 
     const gradient =
@@ -1583,17 +2954,22 @@ function drawBackground() {
             canvasHeight
         );
 
+
     gradient.addColorStop(
         0,
         world.skyTop
     );
+
 
     gradient.addColorStop(
         1,
         world.skyBottom
     );
 
-    ctx.fillStyle = gradient;
+
+    ctx.fillStyle =
+        gradient;
+
 
     ctx.fillRect(
         0,
@@ -1603,17 +2979,23 @@ function drawBackground() {
     );
 
 
-    if (selectedWorld === 1) {
+    if (
+        selectedWorld === 1
+    ) {
 
         drawForestBackground();
 
     }
-    else if (selectedWorld === 2) {
+    else if (
+        selectedWorld === 2
+    ) {
 
         drawSnowBackground();
 
     }
-    else if (selectedWorld === 3) {
+    else if (
+        selectedWorld === 3
+    ) {
 
         drawWaterBackground();
 
@@ -1623,20 +3005,24 @@ function drawBackground() {
         drawFireBackground();
 
     }
+
 }
 
 
 /* =========================================================
-   FOREST BACKGROUND
+   FOREST
 ========================================================= */
 
 function drawForestBackground() {
 
     /* خورشید */
 
-    ctx.fillStyle = "#ffe680";
+    ctx.fillStyle =
+        "#ffe680";
+
 
     ctx.beginPath();
+
 
     ctx.arc(
         canvasWidth - 100,
@@ -1646,36 +3032,63 @@ function drawForestBackground() {
         Math.PI * 2
     );
 
+
     ctx.fill();
 
 
     /* ابرها */
 
-    for (let i = 0; i < 6; i++) {
+    for (
+        let i = 0;
+        i < 6;
+        i++
+    ) {
 
         const x =
-            ((i * 280 - cameraX * 0.18) %
-                (canvasWidth + 300)) - 150;
+            (
+                i * 280 -
+                cameraX * 0.18
+            ) %
+            (
+                canvasWidth +
+                300
+            ) -
+            150;
+
 
         const y =
-            60 + (i % 3) * 45;
+            60 +
+            (i % 3) * 45;
 
-        drawCloud(x, y, 1);
+
+        drawCloud(
+            x,
+            y,
+            1
+        );
 
     }
 
 
     /* تپه‌ها */
 
-    ctx.fillStyle = "#6ebc55";
+    ctx.fillStyle =
+        "#6ebc55";
 
-    for (let i = 0; i < 8; i++) {
+
+    for (
+        let i = 0;
+        i < 8;
+        i++
+    ) {
 
         const x =
             i * 230 -
             cameraX * 0.28;
 
+
         ctx.beginPath();
+
 
         ctx.arc(
             x,
@@ -1685,6 +3098,7 @@ function drawForestBackground() {
             0
         );
 
+
         ctx.fill();
 
     }
@@ -1692,11 +3106,16 @@ function drawForestBackground() {
 
     /* درخت‌ها */
 
-    for (let i = 0; i < 18; i++) {
+    for (
+        let i = 0;
+        i < 18;
+        i++
+    ) {
 
         const x =
             i * 390 -
             cameraX * 0.55;
+
 
         drawTree(
             x,
@@ -1704,16 +3123,19 @@ function drawForestBackground() {
         );
 
     }
+
 }
 
 
 /* =========================================================
-   SNOW BACKGROUND
+   SNOW
 ========================================================= */
 
 function drawSnowBackground() {
 
-    ctx.fillStyle = "#d9f4ff";
+    ctx.fillStyle =
+        "#d9f4ff";
+
 
     ctx.fillRect(
         0,
@@ -1723,20 +3145,33 @@ function drawSnowBackground() {
     );
 
 
-    for (let i = 0; i < 70; i++) {
+    for (
+        let i = 0;
+        i < 70;
+        i++
+    ) {
 
         const x =
-            (i * 91 -
-                cameraX * 0.15) %
+            (
+                i * 91 -
+                cameraX * 0.15
+            ) %
             canvasWidth;
 
+
         const y =
-            (i * 57) %
+            (
+                i * 57
+            ) %
             canvasHeight;
 
-        ctx.fillStyle = "rgba(255,255,255,0.8)";
+
+        ctx.fillStyle =
+            "rgba(255,255,255,0.8)";
+
 
         ctx.beginPath();
+
 
         ctx.arc(
             x,
@@ -1746,16 +3181,22 @@ function drawSnowBackground() {
             Math.PI * 2
         );
 
+
         ctx.fill();
 
     }
 
 
-    for (let i = 0; i < 10; i++) {
+    for (
+        let i = 0;
+        i < 10;
+        i++
+    ) {
 
         const x =
             i * 270 -
             cameraX * 0.3;
+
 
         drawPineTree(
             x,
@@ -1763,11 +3204,12 @@ function drawSnowBackground() {
         );
 
     }
+
 }
 
 
 /* =========================================================
-   WATER BACKGROUND
+   WATER
 ========================================================= */
 
 function drawWaterBackground() {
@@ -1775,17 +3217,25 @@ function drawWaterBackground() {
     ctx.fillStyle =
         "rgba(255,255,255,0.15)";
 
-    for (let i = 0; i < 12; i++) {
+
+    for (
+        let i = 0;
+        i < 12;
+        i++
+    ) {
 
         const x =
             i * 120 -
             cameraX * 0.25;
 
+
         const y =
             90 +
             Math.sin(i) * 30;
 
+
         ctx.beginPath();
+
 
         ctx.arc(
             x,
@@ -1795,6 +3245,7 @@ function drawWaterBackground() {
             Math.PI * 2
         );
 
+
         ctx.fill();
 
     }
@@ -1803,39 +3254,51 @@ function drawWaterBackground() {
     ctx.fillStyle =
         "rgba(0,100,150,0.18)";
 
+
     ctx.fillRect(
         0,
         canvasHeight - 190,
         canvasWidth,
         190
     );
+
 }
 
 
 /* =========================================================
-   FIRE BACKGROUND
+   FIRE
 ========================================================= */
 
 function drawFireBackground() {
 
-    for (let i = 0; i < 14; i++) {
+    for (
+        let i = 0;
+        i < 14;
+        i++
+    ) {
 
         const x =
             i * 130 -
             cameraX * 0.2;
 
+
         const y =
-            canvasHeight - 90 -
+            canvasHeight -
+            90 -
             (i % 4) * 20;
+
 
         drawLavaRock(
             x,
             y
         );
+
     }
+
 
     ctx.fillStyle =
         "rgba(255,120,20,0.15)";
+
 
     ctx.fillRect(
         0,
@@ -1843,6 +3306,7 @@ function drawFireBackground() {
         canvasWidth,
         canvasHeight
     );
+
 }
 
 
@@ -1850,12 +3314,18 @@ function drawFireBackground() {
    CLOUD
 ========================================================= */
 
-function drawCloud(x, y, scale) {
+function drawCloud(
+    x,
+    y,
+    scale
+) {
 
     ctx.fillStyle =
         "rgba(255,255,255,0.85)";
 
+
     ctx.beginPath();
+
 
     ctx.arc(
         x,
@@ -1865,6 +3335,7 @@ function drawCloud(x, y, scale) {
         Math.PI * 2
     );
 
+
     ctx.arc(
         x + 25 * scale,
         y - 10 * scale,
@@ -1873,6 +3344,7 @@ function drawCloud(x, y, scale) {
         Math.PI * 2
     );
 
+
     ctx.arc(
         x + 55 * scale,
         y,
@@ -1880,6 +3352,7 @@ function drawCloud(x, y, scale) {
         0,
         Math.PI * 2
     );
+
 
     ctx.fill();
 
@@ -1890,9 +3363,14 @@ function drawCloud(x, y, scale) {
    TREE
 ========================================================= */
 
-function drawTree(x, y) {
+function drawTree(
+    x,
+    y
+) {
 
-    ctx.fillStyle = "#75452b";
+    ctx.fillStyle =
+        "#75452b";
+
 
     ctx.fillRect(
         x,
@@ -1902,9 +3380,12 @@ function drawTree(x, y) {
     );
 
 
-    ctx.fillStyle = "#2f8b38";
+    ctx.fillStyle =
+        "#2f8b38";
+
 
     ctx.beginPath();
+
 
     ctx.arc(
         x + 14,
@@ -1914,6 +3395,7 @@ function drawTree(x, y) {
         Math.PI * 2
     );
 
+
     ctx.arc(
         x - 18,
         y - 75,
@@ -1921,6 +3403,7 @@ function drawTree(x, y) {
         0,
         Math.PI * 2
     );
+
 
     ctx.arc(
         x + 45,
@@ -1930,18 +3413,24 @@ function drawTree(x, y) {
         Math.PI * 2
     );
 
+
     ctx.fill();
 
 }
 
 
 /* =========================================================
-   PINE TREE
+   PINE
 ========================================================= */
 
-function drawPineTree(x, y) {
+function drawPineTree(
+    x,
+    y
+) {
 
-    ctx.fillStyle = "#795548";
+    ctx.fillStyle =
+        "#795548";
+
 
     ctx.fillRect(
         x - 7,
@@ -1951,32 +3440,49 @@ function drawPineTree(x, y) {
     );
 
 
-    ctx.fillStyle = "#3f7650";
+    ctx.fillStyle =
+        "#3f7650";
 
-    for (let i = 0; i < 3; i++) {
+
+    for (
+        let i = 0;
+        i < 3;
+        i++
+    ) {
 
         ctx.beginPath();
 
+
         ctx.moveTo(
             x,
-            y - 145 + i * 30
+            y - 145 +
+            i * 30
         );
 
-        ctx.lineTo(
-            x - 45 + i * 10,
-            y - 55 + i * 25
-        );
 
         ctx.lineTo(
-            x + 45 - i * 10,
-            y - 55 + i * 25
+            x - 45 +
+            i * 10,
+            y - 55 +
+            i * 25
         );
+
+
+        ctx.lineTo(
+            x + 45 -
+            i * 10,
+            y - 55 +
+            i * 25
+        );
+
 
         ctx.closePath();
+
 
         ctx.fill();
 
     }
+
 }
 
 
@@ -1984,21 +3490,44 @@ function drawPineTree(x, y) {
    LAVA ROCK
 ========================================================= */
 
-function drawLavaRock(x, y) {
+function drawLavaRock(
+    x,
+    y
+) {
 
-    ctx.fillStyle = "#43221e";
+    ctx.fillStyle =
+        "#43221e";
+
 
     ctx.beginPath();
 
-    ctx.moveTo(x, y);
 
-    ctx.lineTo(x + 25, y - 55);
+    ctx.moveTo(
+        x,
+        y
+    );
 
-    ctx.lineTo(x + 70, y - 65);
 
-    ctx.lineTo(x + 100, y);
+    ctx.lineTo(
+        x + 25,
+        y - 55
+    );
+
+
+    ctx.lineTo(
+        x + 70,
+        y - 65
+    );
+
+
+    ctx.lineTo(
+        x + 100,
+        y
+    );
+
 
     ctx.closePath();
+
 
     ctx.fill();
 
@@ -2006,31 +3535,45 @@ function drawLavaRock(x, y) {
 
 
 /* =========================================================
-   WORLD OBJECTS
+   WORLD
 ========================================================= */
 
 function drawWorld() {
 
-    const world = worlds[selectedWorld];
+    const world =
+        worlds[selectedWorld];
 
 
-    for (const platform of platforms) {
+    for (
+        const platform of platforms
+    ) {
 
         const screenX =
-            platform.x - cameraX;
+            platform.x -
+            cameraX;
+
 
         if (
-            screenX + platform.width < 0 ||
-            screenX > canvasWidth
+            screenX +
+                platform.width <
+                0 ||
+            screenX >
+                canvasWidth
         ) {
+
             continue;
+
         }
 
 
-        if (platform.type === "ground") {
+        if (
+            platform.type ===
+            "ground"
+        ) {
 
             ctx.fillStyle =
                 world.ground;
+
 
             ctx.fillRect(
                 screenX,
@@ -2042,6 +3585,7 @@ function drawWorld() {
 
             ctx.fillStyle =
                 world.grass;
+
 
             ctx.fillRect(
                 screenX,
@@ -2056,6 +3600,7 @@ function drawWorld() {
             ctx.fillStyle =
                 world.platform;
 
+
             ctx.fillRect(
                 screenX,
                 platform.y,
@@ -2067,6 +3612,7 @@ function drawWorld() {
             ctx.fillStyle =
                 world.grass;
 
+
             ctx.fillRect(
                 screenX,
                 platform.y,
@@ -2075,53 +3621,85 @@ function drawWorld() {
             );
 
         }
+
     }
+
 }
 
 
 /* =========================================================
-   COIN DRAW
+   COINS DRAW
 ========================================================= */
 
 function drawCoins() {
 
-    for (const coin of levelCoins) {
+    for (
+        const coin of levelCoins
+    ) {
 
-        if (coin.collected) continue;
+        if (
+            coin.collected
+        ) {
+            continue;
+        }
+
 
         const x =
-            coin.x - cameraX;
+            coin.x -
+            cameraX;
+
 
         if (
             x < -30 ||
-            x > canvasWidth + 30
-        ) continue;
+            x >
+                canvasWidth + 30
+        ) {
+
+            continue;
+
+        }
 
 
         const scale =
             Math.abs(
-                Math.cos(coin.spin)
+                Math.cos(
+                    coin.spin
+                )
             );
 
+
         ctx.save();
+
 
         ctx.translate(
             x,
             coin.y
         );
 
+
         ctx.scale(
-            Math.max(0.15, scale),
+            Math.max(
+                0.15,
+                scale
+            ),
             1
         );
 
 
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = "#ffe600";
+        ctx.shadowBlur =
+            15;
 
-        ctx.fillStyle = "#ffd43b";
+
+        ctx.shadowColor =
+            "#ffe600";
+
+
+        ctx.fillStyle =
+            "#ffd43b";
+
 
         ctx.beginPath();
+
 
         ctx.arc(
             0,
@@ -2131,12 +3709,17 @@ function drawCoins() {
             Math.PI * 2
         );
 
+
         ctx.fill();
 
 
-        ctx.shadowBlur = 0;
+        ctx.shadowBlur =
+            0;
 
-        ctx.fillStyle = "#b77a00";
+
+        ctx.fillStyle =
+            "#b77a00";
+
 
         ctx.fillRect(
             -2,
@@ -2145,31 +3728,51 @@ function drawCoins() {
             14
         );
 
+
         ctx.restore();
+
     }
+
 }
 
 
 /* =========================================================
-   ENEMY DRAW
+   ENEMIES DRAW
 ========================================================= */
 
 function drawEnemies() {
 
-    for (const enemy of enemies) {
+    for (
+        const enemy of enemies
+    ) {
 
-        if (!enemy.alive) continue;
+        if (
+            !enemy.alive
+        ) {
+            continue;
+        }
+
 
         const x =
-            enemy.x - cameraX;
+            enemy.x -
+            cameraX;
+
 
         if (
             x < -100 ||
-            x > canvasWidth + 100
-        ) continue;
+            x >
+                canvasWidth + 100
+        ) {
+
+            continue;
+
+        }
 
 
-        if (enemy.type === "snail") {
+        if (
+            enemy.type ===
+            "snail"
+        ) {
 
             drawSnail(
                 x,
@@ -2177,7 +3780,10 @@ function drawEnemies() {
             );
 
         }
-        else if (enemy.type === "penguin") {
+        else if (
+            enemy.type ===
+            "penguin"
+        ) {
 
             drawPenguin(
                 x,
@@ -2185,7 +3791,10 @@ function drawEnemies() {
             );
 
         }
-        else if (enemy.type === "fish") {
+        else if (
+            enemy.type ===
+            "fish"
+        ) {
 
             drawFish(
                 x,
@@ -2199,8 +3808,11 @@ function drawEnemies() {
                 x,
                 enemy.y
             );
+
         }
+
     }
+
 }
 
 
@@ -2208,11 +3820,17 @@ function drawEnemies() {
    SNAIL
 ========================================================= */
 
-function drawSnail(x, y) {
+function drawSnail(
+    x,
+    y
+) {
 
-    ctx.fillStyle = "#6c4a2e";
+    ctx.fillStyle =
+        "#6c4a2e";
+
 
     ctx.beginPath();
+
 
     ctx.ellipse(
         x + 22,
@@ -2224,12 +3842,16 @@ function drawSnail(x, y) {
         Math.PI * 2
     );
 
+
     ctx.fill();
 
 
-    ctx.fillStyle = "#c47c3d";
+    ctx.fillStyle =
+        "#c47c3d";
+
 
     ctx.beginPath();
+
 
     ctx.arc(
         x + 20,
@@ -2239,12 +3861,16 @@ function drawSnail(x, y) {
         Math.PI * 2
     );
 
+
     ctx.fill();
 
 
-    ctx.fillStyle = "white";
+    ctx.fillStyle =
+        "white";
+
 
     ctx.beginPath();
+
 
     ctx.arc(
         x + 32,
@@ -2254,6 +3880,7 @@ function drawSnail(x, y) {
         Math.PI * 2
     );
 
+
     ctx.arc(
         x + 43,
         y + 5,
@@ -2262,12 +3889,16 @@ function drawSnail(x, y) {
         Math.PI * 2
     );
 
+
     ctx.fill();
 
 
-    ctx.fillStyle = "#111";
+    ctx.fillStyle =
+        "#111";
+
 
     ctx.beginPath();
+
 
     ctx.arc(
         x + 32,
@@ -2277,6 +3908,7 @@ function drawSnail(x, y) {
         Math.PI * 2
     );
 
+
     ctx.arc(
         x + 43,
         y + 5,
@@ -2285,7 +3917,9 @@ function drawSnail(x, y) {
         Math.PI * 2
     );
 
+
     ctx.fill();
+
 }
 
 
@@ -2293,11 +3927,17 @@ function drawSnail(x, y) {
    PENGUIN
 ========================================================= */
 
-function drawPenguin(x, y) {
+function drawPenguin(
+    x,
+    y
+) {
 
-    ctx.fillStyle = "#26384b";
+    ctx.fillStyle =
+        "#26384b";
+
 
     ctx.beginPath();
+
 
     ctx.ellipse(
         x + 22,
@@ -2309,12 +3949,16 @@ function drawPenguin(x, y) {
         Math.PI * 2
     );
 
+
     ctx.fill();
 
 
-    ctx.fillStyle = "#f8fbff";
+    ctx.fillStyle =
+        "#f8fbff";
+
 
     ctx.beginPath();
+
 
     ctx.ellipse(
         x + 22,
@@ -2326,31 +3970,40 @@ function drawPenguin(x, y) {
         Math.PI * 2
     );
 
+
     ctx.fill();
 
 
-    ctx.fillStyle = "#ffb52e";
+    ctx.fillStyle =
+        "#ffb52e";
+
 
     ctx.beginPath();
+
 
     ctx.moveTo(
         x + 21,
         y + 12
     );
 
+
     ctx.lineTo(
         x + 34,
         y + 17
     );
+
 
     ctx.lineTo(
         x + 21,
         y + 22
     );
 
+
     ctx.closePath();
 
+
     ctx.fill();
+
 }
 
 
@@ -2358,11 +4011,17 @@ function drawPenguin(x, y) {
    FISH
 ========================================================= */
 
-function drawFish(x, y) {
+function drawFish(
+    x,
+    y
+) {
 
-    ctx.fillStyle = "#ff7c48";
+    ctx.fillStyle =
+        "#ff7c48";
+
 
     ctx.beginPath();
+
 
     ctx.ellipse(
         x + 22,
@@ -2374,34 +4033,43 @@ function drawFish(x, y) {
         Math.PI * 2
     );
 
+
     ctx.fill();
 
 
     ctx.beginPath();
+
 
     ctx.moveTo(
         x,
         y + 22
     );
 
+
     ctx.lineTo(
         x - 20,
         y + 7
     );
+
 
     ctx.lineTo(
         x - 20,
         y + 37
     );
 
+
     ctx.closePath();
+
 
     ctx.fill();
 
 
-    ctx.fillStyle = "white";
+    ctx.fillStyle =
+        "white";
+
 
     ctx.beginPath();
+
 
     ctx.arc(
         x + 32,
@@ -2411,12 +4079,16 @@ function drawFish(x, y) {
         Math.PI * 2
     );
 
+
     ctx.fill();
 
 
-    ctx.fillStyle = "#111";
+    ctx.fillStyle =
+        "#111";
+
 
     ctx.beginPath();
+
 
     ctx.arc(
         x + 33,
@@ -2426,7 +4098,9 @@ function drawFish(x, y) {
         Math.PI * 2
     );
 
+
     ctx.fill();
+
 }
 
 
@@ -2434,11 +4108,17 @@ function drawFish(x, y) {
    BOMB
 ========================================================= */
 
-function drawBomb(x, y) {
+function drawBomb(
+    x,
+    y
+) {
 
-    ctx.fillStyle = "#292929";
+    ctx.fillStyle =
+        "#292929";
+
 
     ctx.beginPath();
+
 
     ctx.arc(
         x + 22,
@@ -2448,19 +4128,26 @@ function drawBomb(x, y) {
         Math.PI * 2
     );
 
+
     ctx.fill();
 
 
-    ctx.strokeStyle = "#e9a31a";
+    ctx.strokeStyle =
+        "#e9a31a";
 
-    ctx.lineWidth = 4;
+
+    ctx.lineWidth =
+        4;
+
 
     ctx.beginPath();
+
 
     ctx.moveTo(
         x + 30,
         y + 3
     );
+
 
     ctx.quadraticCurveTo(
         x + 45,
@@ -2469,12 +4156,16 @@ function drawBomb(x, y) {
         y - 5
     );
 
+
     ctx.stroke();
 
 
-    ctx.fillStyle = "#ff5a24";
+    ctx.fillStyle =
+        "#ff5a24";
+
 
     ctx.beginPath();
+
 
     ctx.arc(
         x + 54,
@@ -2484,7 +4175,9 @@ function drawBomb(x, y) {
         Math.PI * 2
     );
 
+
     ctx.fill();
+
 }
 
 
@@ -2496,14 +4189,20 @@ function drawPlayer() {
 
     if (
         player.invincible > 0 &&
-        Math.floor(player.invincible * 10) % 2 === 0
+        Math.floor(
+            player.invincible * 10
+        ) % 2 === 0
     ) {
+
         return;
+
     }
 
 
     const x =
-        player.x - cameraX;
+        player.x -
+        cameraX;
+
 
     const y =
         player.y;
@@ -2511,10 +4210,13 @@ function drawPlayer() {
 
     ctx.save();
 
+
     ctx.translate(
-        x + player.width / 2,
+        x +
+            player.width / 2,
         y
     );
+
 
     ctx.scale(
         player.direction,
@@ -2522,16 +4224,19 @@ function drawPlayer() {
     );
 
 
-    /*
-       پاها
-    */
-
     const walk =
         player.onGround
-            ? Math.sin(player.animTime) * 4
+            ? Math.sin(
+                player.animTime
+            ) * 4
             : 0;
 
-    ctx.fillStyle = "#333b70";
+
+    /* پاها */
+
+    ctx.fillStyle =
+        "#333b70";
+
 
     ctx.fillRect(
         -13,
@@ -2539,6 +4244,7 @@ function drawPlayer() {
         10,
         19
     );
+
 
     ctx.fillRect(
         3,
@@ -2548,11 +4254,11 @@ function drawPlayer() {
     );
 
 
-    /*
-       کفش
-    */
+    /* کفش */
 
-    ctx.fillStyle = "#5c2c27";
+    ctx.fillStyle =
+        "#5c2c27";
+
 
     ctx.fillRect(
         -16,
@@ -2560,6 +4266,7 @@ function drawPlayer() {
         15,
         7
     );
+
 
     ctx.fillRect(
         2,
@@ -2569,13 +4276,14 @@ function drawPlayer() {
     );
 
 
-    /*
-       بدن
-    */
+    /* بدن */
 
-    ctx.fillStyle = "#e94c54";
+    ctx.fillStyle =
+        "#e94c54";
+
 
     ctx.beginPath();
+
 
     ctx.roundRect(
         -16,
@@ -2585,14 +4293,15 @@ function drawPlayer() {
         9
     );
 
+
     ctx.fill();
 
 
-    /*
-       لباس
-    */
+    /* لباس */
 
-    ctx.fillStyle = "#f3d35b";
+    ctx.fillStyle =
+        "#f3d35b";
+
 
     ctx.fillRect(
         -13,
@@ -2602,11 +4311,11 @@ function drawPlayer() {
     );
 
 
-    /*
-       دست‌ها
-    */
+    /* دست‌ها */
 
-    ctx.fillStyle = "#f3bd91";
+    ctx.fillStyle =
+        "#f3bd91";
+
 
     ctx.fillRect(
         -23,
@@ -2614,6 +4323,7 @@ function drawPlayer() {
         9,
         20
     );
+
 
     ctx.fillRect(
         14,
@@ -2623,9 +4333,7 @@ function drawPlayer() {
     );
 
 
-    /*
-       گردن
-    */
+    /* گردن */
 
     ctx.fillRect(
         -6,
@@ -2635,13 +4343,14 @@ function drawPlayer() {
     );
 
 
-    /*
-       مو
-    */
+    /* مو */
 
-    ctx.fillStyle = "#4c2920";
+    ctx.fillStyle =
+        "#4c2920";
+
 
     ctx.beginPath();
+
 
     ctx.arc(
         0,
@@ -2651,16 +4360,18 @@ function drawPlayer() {
         Math.PI * 2
     );
 
+
     ctx.fill();
 
 
-    /*
-       صورت
-    */
+    /* صورت */
 
-    ctx.fillStyle = "#f3bd91";
+    ctx.fillStyle =
+        "#f3bd91";
+
 
     ctx.beginPath();
+
 
     ctx.arc(
         3,
@@ -2670,16 +4381,18 @@ function drawPlayer() {
         Math.PI * 2
     );
 
+
     ctx.fill();
 
 
-    /*
-       مو روی صورت
-    */
+    /* مو */
 
-    ctx.fillStyle = "#4c2920";
+    ctx.fillStyle =
+        "#4c2920";
+
 
     ctx.beginPath();
+
 
     ctx.arc(
         -3,
@@ -2689,16 +4402,18 @@ function drawPlayer() {
         Math.PI * 2
     );
 
+
     ctx.fill();
 
 
-    /*
-       چشم
-    */
+    /* چشم */
 
-    ctx.fillStyle = "#222";
+    ctx.fillStyle =
+        "#222";
+
 
     ctx.beginPath();
+
 
     ctx.arc(
         8,
@@ -2708,18 +4423,22 @@ function drawPlayer() {
         Math.PI * 2
     );
 
+
     ctx.fill();
 
 
-    /*
-       لبخند
-    */
+    /* لبخند */
 
-    ctx.strokeStyle = "#9b4d46";
+    ctx.strokeStyle =
+        "#9b4d46";
 
-    ctx.lineWidth = 2;
+
+    ctx.lineWidth =
+        2;
+
 
     ctx.beginPath();
+
 
     ctx.arc(
         7,
@@ -2729,10 +4448,12 @@ function drawPlayer() {
         Math.PI
     );
 
+
     ctx.stroke();
 
 
     ctx.restore();
+
 }
 
 
@@ -2742,18 +4463,29 @@ function drawPlayer() {
 
 function drawBullets() {
 
-    for (const bullet of bullets) {
+    for (
+        const bullet of bullets
+    ) {
 
         const x =
-            bullet.x - cameraX;
+            bullet.x -
+            cameraX;
 
-        ctx.fillStyle = "#fff";
 
-        ctx.shadowBlur = 12;
+        ctx.fillStyle =
+            "#fff";
 
-        ctx.shadowColor = "#ffdf43";
+
+        ctx.shadowBlur =
+            12;
+
+
+        ctx.shadowColor =
+            "#ffdf43";
+
 
         ctx.beginPath();
+
 
         ctx.arc(
             x,
@@ -2763,26 +4495,37 @@ function drawBullets() {
             Math.PI * 2
         );
 
+
         ctx.fill();
 
-        ctx.shadowBlur = 0;
+
+        ctx.shadowBlur =
+            0;
+
     }
+
 }
 
 
 /* =========================================================
-   FLAG DRAW
+   FLAG
 ========================================================= */
 
 function drawFlag() {
 
-    if (!flag) return;
+    if (!flag) {
+        return;
+    }
+
 
     const x =
-        flag.x - cameraX;
+        flag.x -
+        cameraX;
 
 
-    ctx.fillStyle = "#eeeeee";
+    ctx.fillStyle =
+        "#eeeeee";
+
 
     ctx.fillRect(
         x,
@@ -2792,33 +4535,43 @@ function drawFlag() {
     );
 
 
-    ctx.fillStyle = "#e94455";
+    ctx.fillStyle =
+        "#e94455";
+
 
     ctx.beginPath();
+
 
     ctx.moveTo(
         x + 7,
         flag.y
     );
 
+
     ctx.lineTo(
         x + 55,
         flag.y + 20
     );
+
 
     ctx.lineTo(
         x + 7,
         flag.y + 38
     );
 
+
     ctx.closePath();
+
 
     ctx.fill();
 
 
-    ctx.fillStyle = "#f1c84b";
+    ctx.fillStyle =
+        "#f1c84b";
+
 
     ctx.beginPath();
+
 
     ctx.arc(
         x + 3,
@@ -2828,7 +4581,9 @@ function drawFlag() {
         Math.PI * 2
     );
 
+
     ctx.fill();
+
 }
 
 
@@ -2838,10 +4593,18 @@ function drawFlag() {
 
 function drawBoss() {
 
-    if (!boss || !boss.active) return;
+    if (
+        !boss ||
+        !boss.active
+    ) {
+        return;
+    }
+
 
     const x =
-        boss.x - cameraX;
+        boss.x -
+        cameraX;
+
 
     const y =
         boss.y;
@@ -2850,16 +4613,22 @@ function drawBoss() {
     ctx.save();
 
 
-    if (boss.hitFlash > 0) {
+    if (
+        boss.hitFlash > 0
+    ) {
 
-        ctx.globalAlpha = 0.55;
+        ctx.globalAlpha =
+            0.55;
 
     }
 
 
-    ctx.fillStyle = "#71356e";
+    ctx.fillStyle =
+        "#71356e";
+
 
     ctx.beginPath();
+
 
     ctx.roundRect(
         x,
@@ -2869,27 +4638,36 @@ function drawBoss() {
         18
     );
 
+
     ctx.fill();
 
 
-    ctx.fillStyle = "#f4c19c";
+    ctx.fillStyle =
+        "#f4c19c";
+
 
     ctx.beginPath();
 
+
     ctx.arc(
-        x + boss.width / 2,
+        x +
+            boss.width / 2,
         y + 30,
         24,
         0,
         Math.PI * 2
     );
 
+
     ctx.fill();
 
 
-    ctx.fillStyle = "#222";
+    ctx.fillStyle =
+        "#222";
+
 
     ctx.beginPath();
+
 
     ctx.arc(
         x + 33,
@@ -2899,6 +4677,7 @@ function drawBoss() {
         Math.PI * 2
     );
 
+
     ctx.arc(
         x + 50,
         y + 27,
@@ -2907,10 +4686,13 @@ function drawBoss() {
         Math.PI * 2
     );
 
+
     ctx.fill();
 
 
-    ctx.fillStyle = "#e23c4d";
+    ctx.fillStyle =
+        "#e23c4d";
+
 
     ctx.fillRect(
         x + 17,
@@ -2925,14 +4707,21 @@ function drawBoss() {
 
     /* نوار جان */
 
-    const barWidth = 100;
+    const barWidth =
+        100;
+
 
     const hpWidth =
         barWidth *
-        (boss.hp / boss.maxHp);
+        (
+            boss.hp /
+            boss.maxHp
+        );
 
 
-    ctx.fillStyle = "#222";
+    ctx.fillStyle =
+        "#222";
+
 
     ctx.fillRect(
         x - 10,
@@ -2942,7 +4731,9 @@ function drawBoss() {
     );
 
 
-    ctx.fillStyle = "#ef4450";
+    ctx.fillStyle =
+        "#ef4450";
+
 
     ctx.fillRect(
         x - 10,
@@ -2950,6 +4741,7 @@ function drawBoss() {
         hpWidth,
         9
     );
+
 }
 
 
@@ -2959,10 +4751,18 @@ function drawBoss() {
 
 function drawFather() {
 
-    if (!father || father.rescued) return;
+    if (
+        !father ||
+        father.rescued
+    ) {
+        return;
+    }
+
 
     const x =
-        father.x - cameraX;
+        father.x -
+        cameraX;
+
 
     const y =
         father.y;
@@ -2970,9 +4770,13 @@ function drawFather() {
 
     /* قفس */
 
-    ctx.strokeStyle = "#8b8b8b";
+    ctx.strokeStyle =
+        "#8b8b8b";
 
-    ctx.lineWidth = 5;
+
+    ctx.lineWidth =
+        5;
+
 
     ctx.strokeRect(
         x,
@@ -2982,27 +4786,37 @@ function drawFather() {
     );
 
 
-    for (let i = 1; i < 4; i++) {
+    for (
+        let i = 1;
+        i < 4;
+        i++
+    ) {
 
         ctx.beginPath();
+
 
         ctx.moveTo(
             x + i * 18,
             y
         );
 
+
         ctx.lineTo(
             x + i * 18,
             y + father.height
         );
 
+
         ctx.stroke();
+
     }
 
 
     /* پدر */
 
-    ctx.fillStyle = "#355a91";
+    ctx.fillStyle =
+        "#355a91";
+
 
     ctx.fillRect(
         x + 20,
@@ -3012,9 +4826,12 @@ function drawFather() {
     );
 
 
-    ctx.fillStyle = "#f1bd91";
+    ctx.fillStyle =
+        "#f1bd91";
+
 
     ctx.beginPath();
+
 
     ctx.arc(
         x + 38,
@@ -3024,12 +4841,16 @@ function drawFather() {
         Math.PI * 2
     );
 
+
     ctx.fill();
 
 
-    ctx.fillStyle = "#4b3026";
+    ctx.fillStyle =
+        "#4b3026";
+
 
     ctx.beginPath();
+
 
     ctx.arc(
         x + 38,
@@ -3039,7 +4860,9 @@ function drawFather() {
         Math.PI * 2
     );
 
+
     ctx.fill();
+
 }
 
 
@@ -3076,6 +4899,7 @@ function drawGame() {
     drawPlayer();
 
     updateHUD();
+
 }
 
 
@@ -3085,11 +4909,14 @@ function drawGame() {
 
 function updateGame(dt) {
 
-    if (!gameRunning) return;
-
-    if (gamePaused) return;
-
-    if (gameOver || gameWon) return;
+    if (
+        !gameRunning ||
+        gamePaused ||
+        gameOver ||
+        gameWon
+    ) {
+        return;
+    }
 
 
     updatePlayer(dt);
@@ -3100,13 +4927,14 @@ function updateGame(dt) {
 
     updateCoins();
 
-    updateBoss();
+    updateBoss(dt);
 
     checkFinish();
 
     updateCamera();
 
     updateHUD();
+
 }
 
 
@@ -3114,24 +4942,52 @@ function updateGame(dt) {
    GAME LOOP
 ========================================================= */
 
-function gameLoop(time) {
+function gameLoop(
+    time,
+    session
+) {
 
-    if (!gameRunning) {
+    /*
+       اگر این loop قدیمی باشد،
+       کاملاً متوقف می‌شود.
+    */
+
+    if (
+        session !==
+        gameSessionId
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        !gameRunning
+    ) {
 
         drawGame();
 
+        animationFrameId =
+            null;
+
         return;
+
     }
 
 
     const dt =
         Math.min(
             0.05,
-            (time - lastTime) / 1000
+            (
+                time -
+                lastTime
+            ) / 1000
         );
 
 
-    lastTime = time;
+    lastTime =
+        time;
 
 
     updateGame(dt);
@@ -3139,7 +4995,15 @@ function gameLoop(time) {
     drawGame();
 
 
-    requestAnimationFrame(gameLoop);
+    animationFrameId =
+        requestAnimationFrame(
+            (nextTime) =>
+                gameLoop(
+                    nextTime,
+                    session
+                )
+        );
+
 }
 
 
@@ -3149,15 +5013,28 @@ function gameLoop(time) {
 
 resizeCanvas();
 
+
 lives = 3;
 coins = 0;
 score = 0;
 
-gameScreen.classList.add("hidden");
 
-pauseMenu.classList.add("hidden");
-gameOverMenu.classList.add("hidden");
-winMenu.classList.add("hidden");
+gameScreen.classList.add(
+    "hidden"
+);
+
+
+pauseMenu.classList.add(
+    "hidden"
+);
+
+gameOverMenu.classList.add(
+    "hidden"
+);
+
+winMenu.classList.add(
+    "hidden"
+);
 
 
 /* =========================================================
