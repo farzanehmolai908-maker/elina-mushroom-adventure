@@ -3483,3 +3483,326 @@ function drawPlayer() {
     ctx.arc(
         -19,
         -63 + bodyBob,
+        7,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    /* Ponytail */
+
+    ctx.fillStyle = "#5b2e20";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        -22,
+        -69 + bodyBob,
+        12,
+        18,
+        -0.5,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    /* Cap */
+
+    ctx.fillStyle = "#e53e42";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        0,
+        -82 + bodyBob,
+        23,
+        11,
+        0,
+        Math.PI,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+    ctx.fillRect(
+        -17,
+        -83 + bodyBob,
+        35,
+        10
+    );
+
+
+    /* Cap highlight */
+
+    ctx.fillStyle = "#ff7771";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        8,
+        -86 + bodyBob,
+        4,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    /* Cap emblem */
+
+    ctx.fillStyle = "#ffffff";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        0,
+        -85 + bodyBob,
+        6,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+    ctx.fillStyle = "#e53e42";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        0,
+        -85 + bodyBob,
+        3,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    /* Eyes */
+
+    ctx.fillStyle = "#ffffff";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        7,
+        -66 + bodyBob,
+        5,
+        7,
+        0,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+    ctx.fillStyle = "#222";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        9,
+        -66 + bodyBob,
+        2.5,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    /* Smile */
+
+    ctx.strokeStyle = "#873c35";
+    ctx.lineWidth = 2;
+
+    ctx.beginPath();
+
+    ctx.arc(
+        7,
+        -59 + bodyBob,
+        6,
+        0.1,
+        1.3
+    );
+
+    ctx.stroke();
+
+
+    /* Shooting hand / muzzle */
+
+    if (keys.shoot && player.shootCooldown > 10) {
+        ctx.fillStyle = "#ffd85a";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            30,
+            -28,
+            7,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+    }
+
+    ctx.restore();
+}
+
+
+/* =========================
+   STAR
+========================= */
+
+function drawStar(x, y, radius, fill) {
+    ctx.save();
+
+    ctx.translate(x, y);
+
+    ctx.fillStyle = fill;
+
+    ctx.beginPath();
+
+    for (let i = 0; i < 10; i++) {
+        const angle =
+            -Math.PI / 2 +
+            i * Math.PI / 5;
+
+        const r =
+            i % 2 === 0
+                ? radius
+                : radius * 0.42;
+
+        const px =
+            Math.cos(angle) * r;
+
+        const py =
+            Math.sin(angle) * r;
+
+        if (i === 0) {
+            ctx.moveTo(px, py);
+        } else {
+            ctx.lineTo(px, py);
+        }
+    }
+
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
+}
+
+
+/* =========================
+   ROUND RECT
+========================= */
+
+function roundRect(
+    x,
+    y,
+    width,
+    height,
+    radius
+) {
+    const r = Math.min(
+        radius,
+        width / 2,
+        height / 2
+    );
+
+    ctx.beginPath();
+
+    ctx.moveTo(x + r, y);
+
+    ctx.arcTo(
+        x + width,
+        y,
+        x + width,
+        y + height,
+        r
+    );
+
+    ctx.arcTo(
+        x + width,
+        y + height,
+        x,
+        y + height,
+        r
+    );
+
+    ctx.arcTo(
+        x,
+        y + height,
+        x,
+        y,
+        r
+    );
+
+    ctx.arcTo(
+        x,
+        y,
+        x + width,
+        y,
+        r
+    );
+
+    ctx.closePath();
+}
+
+
+/* =========================
+   HUD
+========================= */
+
+function updateHUD() {
+    livesEl.textContent = lives;
+    coinsEl.textContent = coins;
+    scoreEl.textContent = score;
+
+    currentWorldEl.textContent =
+        currentWorld;
+
+    currentLevelEl.textContent =
+        currentLevel;
+}
+
+
+/* =========================
+   INITIALIZE
+========================= */
+
+resizeCanvas();
+updateHUD();
+
+showOnly(mainMenu);
+
+
+/* =========================
+   PREVENT MOBILE GESTURES
+========================= */
+
+document.addEventListener(
+    "touchmove",
+    e => {
+        if (gameRunning) {
+            e.preventDefault();
+        }
+    },
+    { passive: false }
+);
+
+document.addEventListener(
+    "contextmenu",
+    e => {
+        if (gameRunning) {
+            e.preventDefault();
+        }
+    }
+);
